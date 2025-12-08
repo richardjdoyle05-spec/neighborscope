@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Train, School, Coffee, AlertTriangle, Clock, Navigation, Zap, ShoppingBag, TreePine, Info, Heart, X, Check, TrendingUp, Building, Users, Moon, Sun, ExternalLink, Calendar, Search, ArrowRight, Eye } from 'lucide-react';
+import { MapPin, Train, School, Coffee, AlertTriangle, Clock, Navigation, Zap, ShoppingBag, Info, Heart, X, Check, TrendingUp, Moon, Sun, ExternalLink, Calendar, Search, ArrowRight, Eye } from 'lucide-react';
 
 // IMPORTANT: Add your Google Maps API key here
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBxU6OMCZvkLLbcjo4bXoyQOHg02VZ8gok'; // Replace with your actual API key

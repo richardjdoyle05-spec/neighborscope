@@ -240,7 +240,6 @@ export default function NeighborScope() {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [userPreferences, setUserPreferences] = useState(null);
-  const [workAddress, setWorkAddress] = useState('');
   const [comparisonList, setComparisonList] = useState([]);
   const [showMatcher, setShowMatcher] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -1159,7 +1158,7 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
   useEffect(() => {
     if (!mapLoaded || !showStreetView || !streetViewRef.current) return;
 
-    const panorama = new window.google.maps.StreetViewPanorama(
+   new window.google.maps.StreetViewPanorama(
       streetViewRef.current,
       {
         position: { lat: property.coords.lat, lng: property.coords.lng },

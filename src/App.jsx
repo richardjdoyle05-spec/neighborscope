@@ -48,6 +48,7 @@ const parsePropertyURL = (input) => {
     // Zillow URL parsing
     if (cleanInput.includes('zillow.com')) {
       // Example: zillow.com/homedetails/123-Main-St-Garden-City-NY-11530/12345_zpid/
+      // eslint-disable-next-line no-useless-escape
       const match = cleanInput.match(/homedetails\/([^\/]+)/);
       if (match) {
         return match[1].replace(/-/g, ' ').replace(/_zpid.*/, '');
@@ -56,6 +57,7 @@ const parsePropertyURL = (input) => {
     
     // Redfin URL parsing
     if (cleanInput.includes('redfin.com')) {
+      // eslint-disable-next-line no-useless-escape
       // Example: redfin.com/NY/Garden-City/123-Main-St-11530/home/12345
       const match = cleanInput.match(/\/([^\/]+)\/home\//);
       if (match) {
@@ -64,6 +66,7 @@ const parsePropertyURL = (input) => {
     }
     
     // Realtor.com URL parsing
+    // eslint-disable-next-line no-useless-escape
     if (cleanInput.includes('realtor.com')) {
       // Example: realtor.com/realestateandhomes-detail/123-Main-St_Garden-City_NY_11530
       const match = cleanInput.match(/detail\/([^\/]+)/);

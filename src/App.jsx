@@ -29,7 +29,7 @@ const NeighborhoodScopeLogo = ({ size = 'md', theme = 'dark', className = '' }) 
         </div>
       </div>
       <span className={`playfair font-bold ${colors.text} ${text}`}>
-        Neighbor<span className={colors.primary}>Scope</span>
+        Neighbor<span className={colors.primary}>hoodScope</span>
       </span>
     </div>
   );

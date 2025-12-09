@@ -1196,7 +1196,7 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
   useEffect(() => {
     if (!mapLoaded || !showStreetView || !streetViewRef.current) return;
 
-   new window.google.maps.StreetViewPanorama(
+   const panorama = new window.google.maps.StreetViewPanorama(
       streetViewRef.current,
       {
         position: { lat: property.coordinates.lat, lng: property.coordinates.lng },

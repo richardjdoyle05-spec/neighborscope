@@ -84,6 +84,11 @@ const parsePropertyURL = (input) => {
 // Geocoding function
 const geocodeAddress = async (address) => {
   try {
+    // Wait for Google Maps to load
+    while (!window.google || !window.google.maps) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
     const geocoder = new window.google.maps.Geocoder();
     
     return new Promise((resolve, reject) => {

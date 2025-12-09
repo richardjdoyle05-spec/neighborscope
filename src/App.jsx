@@ -84,15 +84,24 @@ const parsePropertyURL = (input) => {
 // Geocoding function
 const geocodeAddress = async (address) => {
   try {
-    // Wait for Google Maps to load
-    while (!window.google || !window.google.maps) {
+    // Wait for Google Maps to load (max 10 seconds)
+    let attempts = 0;
+    while ((!window.google || !window.google.maps) && attempts < 100) {
       await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
     }
     
+    if (!window.google || !window.google.maps) {
+      throw new Error('Google Maps failed to load');
+    }
+    
+    console.log('Google Maps loaded, creating geocoder...');
     const geocoder = new window.google.maps.Geocoder();
     
     return new Promise((resolve, reject) => {
+      console.log('Calling geocoder.geocode...');
       geocoder.geocode({ address: address }, (results, status) => {
+        console.log('Geocoder response:', status, results);
         if (status === 'OK' && results[0]) {
           const location = results[0].geometry.location;
           resolve({

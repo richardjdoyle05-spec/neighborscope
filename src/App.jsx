@@ -1217,13 +1217,39 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
         // Keyboard navigation is enabled by default
       }
     );
-    
-    // Add keyboard navigation instructions
-    console.log('🎮 Navigation Tips:');
-    console.log('  • Click anywhere on the road to teleport');
-    console.log('  • Arrow keys to look around');  
-    console.log('  • +/- keys to zoom');
-    console.log('  • Double-click to zoom in');
+    // Enable arrow key navigation
+      const handleKeyDown = (e) => {
+        if (!panorama) return;
+        
+        const pov = panorama.getPov();
+        const step = 10; // degrees to rotate per key press
+        
+        switch(e.key) {
+          case 'ArrowLeft':
+            panorama.setPov({ heading: pov.heading - step, pitch: pov.pitch });
+            e.preventDefault();
+            break;
+          case 'ArrowRight':
+            panorama.setPov({ heading: pov.heading + step, pitch: pov.pitch });
+            e.preventDefault();
+            break;
+          case 'ArrowUp':
+            panorama.setPov({ heading: pov.heading, pitch: Math.min(pov.pitch + step, 90) });
+            e.preventDefault();
+            break;
+          case 'ArrowDown':
+            panorama.setPov({ heading: pov.heading, pitch: Math.max(pov.pitch - step, -90) });
+            e.preventDefault();
+            break;
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+
+      // Cleanup on unmount
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
   }, [mapLoaded, showStreetView, property]);
 
   return (

@@ -1253,6 +1253,20 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
   }, [mapLoaded, showStreetView, property]);
 
   return (
+    {/* Beta Waitlist Banner */}
+<div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 text-center sticky top-0 z-50 shadow-lg">
+  <div className="flex items-center justify-center gap-4 flex-wrap">
+    <span className="font-semibold">🎉 Free Beta - Launching paid plans January 2026</span>
+    <a 
+      href="https://docs.google.com/forms/d/e/1FAIpQLScL0t0mZ3HTrRRvq_AC9EXr2vRG2btwGkN2fmmSp67uZ9ggVg/viewform"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="bg-white text-purple-600 px-4 py-1.5 rounded-full font-semibold hover:bg-purple-50 transition-colors text-sm"
+    >
+      Join Pro Waitlist ($7/mo) →
+    </a>
+  </div>
+</div>
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">

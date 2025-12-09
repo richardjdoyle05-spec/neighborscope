@@ -84,22 +84,25 @@ const parsePropertyURL = (input) => {
 // Geocoding function
 const geocodeAddress = async (address) => {
   try {
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`
-    );
-    const data = await response.json();
+    const geocoder = new window.google.maps.Geocoder();
     
-    if (data.results && data.results.length > 0) {
-      const result = data.results[0];
-      return {
-        coords: result.geometry.location,
-        formattedAddress: result.formatted_address
-      };
-    }
-    return null;
+    return new Promise((resolve, reject) => {
+      geocoder.geocode({ address: address }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          const location = results[0].geometry.location;
+          resolve({
+            lat: location.lat(),
+            lng: location.lng(),
+            formattedAddress: results[0].formatted_address
+          });
+        } else {
+          reject(new Error(`Geocoding failed: ${status}`));
+        }
+      });
+    });
   } catch (error) {
     console.error('Geocoding error:', error);
-    return null;
+    throw error;
   }
 };
 

@@ -1253,6 +1253,7 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
   }, [mapLoaded, showStreetView, property]);
 
   return (
+  <>
     {/* Beta Waitlist Banner */}
 <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 text-center sticky top-0 z-50 shadow-lg">
   <div className="flex items-center justify-center gap-4 flex-wrap">
@@ -1896,6 +1897,7 @@ function ComparisonView({ properties, onBack, onRemove }) {
         )}
       </div>
     </div>
+  </>
   );
 }
 

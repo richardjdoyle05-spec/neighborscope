@@ -1,4 +1,4 @@
-# NeighborScope - Deployment Instructions
+# NeighborhoodScope - Deployment Instructions
 
 **Your app is ready to deploy! Follow these steps exactly.**
 

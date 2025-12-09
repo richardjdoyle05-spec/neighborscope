@@ -303,7 +303,7 @@ export default function NeighborScope() {
       const customProperty = {
         id: 'custom',
         address: result.formattedAddress,
-        coords: result.coords,
+        coordinates: { lat: result.lat, lng: result.lng },
         price: "Price not available", // User can explore neighborhood even without price
         beds: null,
         baths: null,

@@ -1253,12 +1253,10 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
   }, [mapLoaded, showStreetView, property]);
 
   return (
-  <div>
-    {/* Simple Beta Banner */}
+  <>
     <div style={{background: '#8B5CF6', color: 'white', padding: '12px', textAlign: 'center'}}>
-      🎉 Free Beta - <a href="https://docs.google.com/forms/d/e/1FAIpQLScL0t0mZ3HTrRRvq_AC9EXr2vRG2btwGkN2fmmSp67uZ9ggVg/viewform" target="_blank" rel="noopener noreferrer" style={{color: 'white', textDecoration: 'underline'}}>Join Pro Waitlist ($7/mo)</a>
+      🎉 Free Beta - <a href="https://docs.google.com/forms/d/e/1FAIpQLScL0t0mZ3HTrRRvq_AC9EXr2vRG2btwGkN2fmmSp67uZ9ggVg/viewform" target="_blank" rel="noopener noreferrer" style={{color: 'white'}}>Join Waitlist ($7/mo)</a>
     </div>
-    
     <div className="min-h-screen bg-slate-50">
     <a 
       href="https://docs.google.com/forms/d/e/1FAIpQLScL0t0mZ3HTrRRvq_AC9EXr2vRG2btwGkN2fmmSp67uZ9ggVg/viewform"

@@ -402,6 +402,23 @@ export default function NeighborScope() {
 // New Search Landing Page Component
 function SearchLandingPage({ onSubmit, onBrowseSamples, isLoading, error }) {
   const [input, setInput] = useState('');
+  const inputRef = useRef(null);
+
+useEffect(() => {
+  if (!inputRef.current || !window.google) return;
+  
+  const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+    types: ['address'],
+    componentRestrictions: { country: 'us' }
+  });
+  
+  autocomplete.addListener('place_changed', () => {
+    const place = autocomplete.getPlace();
+    if (place.formatted_address) {
+      setInput(place.formatted_address);
+    }
+  });
+}, []);
 
   const handleSubmit = () => {
     if (input.trim()) {
@@ -461,6 +478,7 @@ function SearchLandingPage({ onSubmit, onBrowseSamples, isLoading, error }) {
                 <div className="flex gap-3">
                   <div className="flex-1 relative">
                     <input
+                      ref={inputRef}
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}

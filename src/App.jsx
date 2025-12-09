@@ -1129,7 +1129,7 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
     if (!mapLoaded || !mapRef.current) return;
 
     const map = new window.google.maps.Map(mapRef.current, {
-      center: { lat: property.coords.lat, lng: property.coords.lng },
+      center: { lat: property.coordinates.lat, lng: property.coordinates.lng },
       zoom: 15,
       mapTypeControl: true,
       streetViewControl: false,
@@ -1138,7 +1138,7 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
 
     // Property marker
     new window.google.maps.Marker({
-      position: { lat: property.coords.lat, lng: property.coords.lng },
+      position: { lat: property.coordinates.lat, lng: property.coordinates.lng },
       map: map,
       title: property.address,
       icon: {
@@ -1153,9 +1153,9 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
 
     // Nearby POI markers
     const pois = [
-      { lat: property.coords.lat + 0.005, lng: property.coords.lng - 0.003, color: '#10B981', label: 'School' },
-      { lat: property.coords.lat - 0.007, lng: property.coords.lng + 0.004, color: '#3B82F6', label: 'Train' },
-      { lat: property.coords.lat + 0.003, lng: property.coords.lng + 0.005, color: '#F59E0B', label: 'Cafe' },
+      { lat: property.coordinates.lat + 0.005, lng: property.coordinates.lng - 0.003, color: '#10B981', label: 'School' },
+      { lat: property.coordinates.lat - 0.007, lng: property.coordinates.lng + 0.004, color: '#3B82F6', label: 'Train' },
+      { lat: property.coordinates.lat + 0.003, lng: property.coordinates.lng + 0.005, color: '#F59E0B', label: 'Cafe' },
     ];
 
     pois.forEach(poi => {
@@ -1181,7 +1181,7 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
    new window.google.maps.StreetViewPanorama(
       streetViewRef.current,
       {
-        position: { lat: property.coords.lat, lng: property.coords.lng },
+        position: { lat: property.coordinates.lat, lng: property.coordinates.lng },
         pov: { heading: 165, pitch: 0 },
         zoom: 1,
         // ENHANCED: Enable immersive exploration

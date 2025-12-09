@@ -5,7 +5,7 @@ import { MapPin, Train, School, Coffee, AlertTriangle, Clock, Navigation, Zap, S
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBxU6OMCZvkLLbcjo4bXoyQOHg02VZ8gok'; // Replace with your actual API key
 
 // Logo Component
-const NeighborScopeLogo = ({ size = 'md', theme = 'dark', className = '' }) => {
+const NeighborhoodScopeLogo = ({ size = 'md', theme = 'dark', className = '' }) => {
   const sizes = {
     sm: { icon: 24, text: 'text-xl' },
     md: { icon: 32, text: 'text-2xl' },
@@ -255,7 +255,7 @@ const PROPERTY_CONSIDERATIONS = {
   3: ["Power lines along Stewart Avenue (0.2 mi away)", "Moderate traffic on Franklin Avenue (0.1 mi away)"]
 };
 
-export default function NeighborScope() {
+export default function NeighborhoodScope() {
   const [currentView, setCurrentView] = useState('search'); // Changed default to 'search'
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -448,7 +448,7 @@ useEffect(() => {
 
       {/* Logo - Top Left */}
       <div className="absolute top-8 left-8 z-10">
-        <NeighborScopeLogo size="md" />
+        <NeighborhoodScopeLogo size="md" />
       </div>
 
       <div className="container mx-auto px-6 py-20 flex items-center justify-center min-h-screen">
@@ -896,7 +896,7 @@ function LandingPage({ onPropertySelect, onShowMatcher, onBack, userPreferences,
 
       {/* Logo - Top Left */}
       <div className="absolute top-8 left-8 z-20">
-        <NeighborScopeLogo size="md" />
+        <NeighborhoodScopeLogo size="md" />
       </div>
 
       {/* Back Button */}
@@ -1290,7 +1290,7 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
                 {isInComparison ? 'Added' : 'Compare'}
               </button>
               <div className="ml-2">
-                <NeighborScopeLogo size="sm" theme="light" />
+                <NeighborhoodScopeLogo size="sm" theme="light" />
               </div>
             </div>
           </div>
@@ -1754,7 +1754,7 @@ function ComparisonView({ properties, onBack, onRemove }) {
               </button>
               <h2 className="playfair text-2xl font-bold text-slate-900">Compare Properties</h2>
             </div>
-            <NeighborScopeLogo size="sm" theme="light" />
+            <NeighborhoodScopeLogo size="sm" theme="light" />
           </div>
         </div>
       </div>

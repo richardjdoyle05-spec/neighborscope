@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Train, School, Coffee, AlertTriangle, Clock, Navigation, Zap, ShoppingBag, Info, Heart, X, Check, TrendingUp, Moon, Sun, ExternalLink, Calendar, Search, ArrowRight, Eye } from 'lucide-react';
+import { MapPin, Train, School, Coffee, AlertTriangle, Clock, Navigation, Zap, ShoppingBag, TreePine, Info, Heart, X, Check, TrendingUp, Building, Users, Moon, Sun, ExternalLink, Calendar, Search, ArrowRight, Eye } from 'lucide-react';
 
 // IMPORTANT: Add your Google Maps API key here
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBxU6OMCZvkLLbcjo4bXoyQOHg02VZ8gok'; // Replace with your actual API key
 
 // Logo Component
-const NeighborhoodScopeLogo = ({ size = 'md', theme = 'dark', className = '' }) => {
+const NeighborScopeLogo = ({ size = 'md', theme = 'dark', className = '' }) => {
   const sizes = {
     sm: { icon: 24, text: 'text-xl' },
     md: { icon: 32, text: 'text-2xl' },
@@ -29,7 +29,7 @@ const NeighborhoodScopeLogo = ({ size = 'md', theme = 'dark', className = '' }) 
         </div>
       </div>
       <span className={`playfair font-bold ${colors.text} ${text}`}>
-        Neighbor<span className={colors.primary}>hoodScope</span>
+        Neighbor<span className={colors.primary}>Scope</span>
       </span>
     </div>
   );
@@ -48,7 +48,6 @@ const parsePropertyURL = (input) => {
     // Zillow URL parsing
     if (cleanInput.includes('zillow.com')) {
       // Example: zillow.com/homedetails/123-Main-St-Garden-City-NY-11530/12345_zpid/
-      // eslint-disable-next-line no-useless-escape
       const match = cleanInput.match(/homedetails\/([^\/]+)/);
       if (match) {
         return match[1].replace(/-/g, ' ').replace(/_zpid.*/, '');
@@ -57,7 +56,6 @@ const parsePropertyURL = (input) => {
     
     // Redfin URL parsing
     if (cleanInput.includes('redfin.com')) {
-      // eslint-disable-next-line no-useless-escape
       // Example: redfin.com/NY/Garden-City/123-Main-St-11530/home/12345
       const match = cleanInput.match(/\/([^\/]+)\/home\//);
       if (match) {
@@ -66,10 +64,9 @@ const parsePropertyURL = (input) => {
     }
     
     // Realtor.com URL parsing
-    // eslint-disable-next-line no-useless-escape
     if (cleanInput.includes('realtor.com')) {
       // Example: realtor.com/realestateandhomes-detail/123-Main-St_Garden-City_NY_11530
-      const match = cleanInput.match(/detail\/([^\/]+)/);
+      const match = cleanInput.match(/detail\/([^?]+)/);
       if (match) {
         return match[1].replace(/_/g, ' ').replace(/-/g, ' ');
       }
@@ -84,39 +81,22 @@ const parsePropertyURL = (input) => {
 // Geocoding function
 const geocodeAddress = async (address) => {
   try {
-    // Wait for Google Maps to load (max 10 seconds)
-    let attempts = 0;
-    while ((!window.google || !window.google.maps) && attempts < 100) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      attempts++;
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`
+    );
+    const data = await response.json();
+    
+    if (data.results && data.results.length > 0) {
+      const result = data.results[0];
+      return {
+        coords: result.geometry.location,
+        formattedAddress: result.formatted_address
+      };
     }
-    
-    if (!window.google || !window.google.maps) {
-      throw new Error('Google Maps failed to load');
-    }
-    
-    console.log('Google Maps loaded, creating geocoder...');
-    const geocoder = new window.google.maps.Geocoder();
-    
-    return new Promise((resolve, reject) => {
-      console.log('Calling geocoder.geocode...');
-      geocoder.geocode({ address: address }, (results, status) => {
-        console.log('Geocoder response:', status, results);
-        if (status === 'OK' && results[0]) {
-          const location = results[0].geometry.location;
-          resolve({
-            lat: location.lat(),
-            lng: location.lng(),
-            formattedAddress: results[0].formatted_address
-          });
-        } else {
-          reject(new Error(`Geocoding failed: ${status}`));
-        }
-      });
-    });
+    return null;
   } catch (error) {
     console.error('Geocoding error:', error);
-    throw error;
+    return null;
   }
 };
 
@@ -255,11 +235,12 @@ const PROPERTY_CONSIDERATIONS = {
   3: ["Power lines along Stewart Avenue (0.2 mi away)", "Moderate traffic on Franklin Avenue (0.1 mi away)"]
 };
 
-export default function NeighborhoodScope() {
+export default function NeighborScope() {
   const [currentView, setCurrentView] = useState('search'); // Changed default to 'search'
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [userPreferences, setUserPreferences] = useState(null);
+  const [workAddress, setWorkAddress] = useState('');
   const [comparisonList, setComparisonList] = useState([]);
   const [showMatcher, setShowMatcher] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -303,7 +284,7 @@ export default function NeighborhoodScope() {
       const customProperty = {
         id: 'custom',
         address: result.formattedAddress,
-        coordinates: { lat: result.lat, lng: result.lng },
+        coords: result.coords,
         price: "Price not available", // User can explore neighborhood even without price
         beds: null,
         baths: null,
@@ -402,23 +383,6 @@ export default function NeighborhoodScope() {
 // New Search Landing Page Component
 function SearchLandingPage({ onSubmit, onBrowseSamples, isLoading, error }) {
   const [input, setInput] = useState('');
-  const inputRef = useRef(null);
-
-useEffect(() => {
-  if (!inputRef.current || !window.google) return;
-  
-  const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-    types: ['address'],
-    componentRestrictions: { country: 'us' }
-  });
-  
-  autocomplete.addListener('place_changed', () => {
-    const place = autocomplete.getPlace();
-    if (place.formatted_address) {
-      setInput(place.formatted_address);
-    }
-  });
-}, []);
 
   const handleSubmit = () => {
     if (input.trim()) {
@@ -448,7 +412,7 @@ useEffect(() => {
 
       {/* Logo - Top Left */}
       <div className="absolute top-8 left-8 z-10">
-        <NeighborhoodScopeLogo size="md" />
+        <NeighborScopeLogo size="md" />
       </div>
 
       <div className="container mx-auto px-6 py-20 flex items-center justify-center min-h-screen">
@@ -478,7 +442,6 @@ useEffect(() => {
                 <div className="flex gap-3">
                   <div className="flex-1 relative">
                     <input
-                      ref={inputRef}
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
@@ -896,7 +859,7 @@ function LandingPage({ onPropertySelect, onShowMatcher, onBack, userPreferences,
 
       {/* Logo - Top Left */}
       <div className="absolute top-8 left-8 z-20">
-        <NeighborhoodScopeLogo size="md" />
+        <NeighborScopeLogo size="md" />
       </div>
 
       {/* Back Button */}
@@ -1127,19 +1090,22 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
     setTimeout(() => setShowSuccess(false), 5000);
   };
 
-  // Load Google Maps Script
+  // Check if Google Maps is loaded (from index.html script)
   useEffect(() => {
-    if (window.google) {
+    if (window.google && window.google.maps) {
       setMapLoaded(true);
-      return;
+    } else {
+      // Wait for it to load
+      const checkInterval = setInterval(() => {
+        if (window.google && window.google.maps) {
+          setMapLoaded(true);
+          clearInterval(checkInterval);
+        }
+      }, 100);
+      
+      // Cleanup
+      return () => clearInterval(checkInterval);
     }
-
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => setMapLoaded(true);
-    document.head.appendChild(script);
   }, []);
 
   // Initialize Map
@@ -1147,7 +1113,7 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
     if (!mapLoaded || !mapRef.current) return;
 
     const map = new window.google.maps.Map(mapRef.current, {
-      center: { lat: property.coordinates.lat, lng: property.coordinates.lng },
+      center: { lat: property.coords.lat, lng: property.coords.lng },
       zoom: 15,
       mapTypeControl: true,
       streetViewControl: false,
@@ -1156,7 +1122,7 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
 
     // Property marker
     new window.google.maps.Marker({
-      position: { lat: property.coordinates.lat, lng: property.coordinates.lng },
+      position: { lat: property.coords.lat, lng: property.coords.lng },
       map: map,
       title: property.address,
       icon: {
@@ -1171,9 +1137,9 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
 
     // Nearby POI markers
     const pois = [
-      { lat: property.coordinates.lat + 0.005, lng: property.coordinates.lng - 0.003, color: '#10B981', label: 'School' },
-      { lat: property.coordinates.lat - 0.007, lng: property.coordinates.lng + 0.004, color: '#3B82F6', label: 'Train' },
-      { lat: property.coordinates.lat + 0.003, lng: property.coordinates.lng + 0.005, color: '#F59E0B', label: 'Cafe' },
+      { lat: property.coords.lat + 0.005, lng: property.coords.lng - 0.003, color: '#10B981', label: 'School' },
+      { lat: property.coords.lat - 0.007, lng: property.coords.lng + 0.004, color: '#3B82F6', label: 'Train' },
+      { lat: property.coords.lat + 0.003, lng: property.coords.lng + 0.005, color: '#F59E0B', label: 'Cafe' },
     ];
 
     pois.forEach(poi => {
@@ -1196,10 +1162,10 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
   useEffect(() => {
     if (!mapLoaded || !showStreetView || !streetViewRef.current) return;
 
-   const panorama = new window.google.maps.StreetViewPanorama(
+    const panorama = new window.google.maps.StreetViewPanorama(
       streetViewRef.current,
       {
-        position: { lat: property.coordinates.lat, lng: property.coordinates.lng },
+        position: { lat: property.coords.lat, lng: property.coords.lng },
         pov: { heading: 165, pitch: 0 },
         zoom: 1,
         // ENHANCED: Enable immersive exploration
@@ -1217,57 +1183,16 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
         // Keyboard navigation is enabled by default
       }
     );
-    // Enable arrow key navigation
-      const handleKeyDown = (e) => {
-        if (!panorama) return;
-        
-        const pov = panorama.getPov();
-        const step = 10; // degrees to rotate per key press
-        
-        switch(e.key) {
-          case 'ArrowLeft':
-            panorama.setPov({ heading: pov.heading - step, pitch: pov.pitch });
-            e.preventDefault();
-            break;
-          case 'ArrowRight':
-            panorama.setPov({ heading: pov.heading + step, pitch: pov.pitch });
-            e.preventDefault();
-            break;
-          case 'ArrowUp':
-            panorama.setPov({ heading: pov.heading, pitch: Math.min(pov.pitch + step, 90) });
-            e.preventDefault();
-            break;
-          case 'ArrowDown':
-            panorama.setPov({ heading: pov.heading, pitch: Math.max(pov.pitch - step, -90) });
-            e.preventDefault();
-            break;
-        }
-      };
-
-      window.addEventListener('keydown', handleKeyDown);
-
-      // Cleanup on unmount
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-      };
+    
+    // Add keyboard navigation instructions
+    console.log('🎮 Navigation Tips:');
+    console.log('  • Click anywhere on the road to teleport');
+    console.log('  • Arrow keys to look around');  
+    console.log('  • +/- keys to zoom');
+    console.log('  • Double-click to zoom in');
   }, [mapLoaded, showStreetView, property]);
 
   return (
-  <>
-  <div style={{background: '#8B5CF6', color: 'white', padding: '12px', textAlign: 'center', fontSize: '14px'}}>
-  🎉 Free Beta - Waitlist: bit.ly/neighborhoodscope-pro
-</div>
-    <div className="min-h-screen bg-slate-50">
-    <a 
-      href="https://docs.google.com/forms/d/e/1FAIpQLScL0t0mZ3HTrRRvq_AC9EXr2vRG2btwGkN2fmmSp67uZ9ggVg/viewform"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="bg-white text-purple-600 px-4 py-1.5 rounded-full font-semibold hover:bg-purple-50 transition-colors text-sm"
-    >
-      Join Pro Waitlist ($7/mo) →
-    </a>
-  </div>
-</div>
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
@@ -1305,7 +1230,7 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
                 {isInComparison ? 'Added' : 'Compare'}
               </button>
               <div className="ml-2">
-                <NeighborhoodScopeLogo size="sm" theme="light" />
+                <NeighborScopeLogo size="sm" theme="light" />
               </div>
             </div>
           </div>
@@ -1769,7 +1694,7 @@ function ComparisonView({ properties, onBack, onRemove }) {
               </button>
               <h2 className="playfair text-2xl font-bold text-slate-900">Compare Properties</h2>
             </div>
-            <NeighborhoodScopeLogo size="sm" theme="light" />
+            <NeighborScopeLogo size="sm" theme="light" />
           </div>
         </div>
       </div>
@@ -1897,7 +1822,6 @@ function ComparisonView({ properties, onBack, onRemove }) {
         )}
       </div>
     </div>
-  </>
   );
 }
 

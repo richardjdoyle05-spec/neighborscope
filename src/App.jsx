@@ -81,19 +81,34 @@ const parsePropertyURL = (input) => {
 // Geocoding function
 const geocodeAddress = async (address) => {
   try {
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`
-    );
-    const data = await response.json();
-    
-    if (data.results && data.results.length > 0) {
-      const result = data.results[0];
-      return {
-        coords: result.geometry.location,
-        formattedAddress: result.formatted_address
-      };
+    // Wait for Google Maps to be available
+    if (!window.google || !window.google.maps) {
+      console.error('Google Maps not loaded yet');
+      return null;
     }
-    return null;
+
+    const geocoder = new window.google.maps.Geocoder();
+    
+    return new Promise((resolve, reject) => {
+      geocoder.geocode({ address: address }, (results, status) => {
+        console.log('Geocode status:', status);
+        console.log('Geocode results:', results);
+        
+        if (status === 'OK' && results && results.length > 0) {
+          const result = results[0];
+          resolve({
+            coords: {
+              lat: result.geometry.location.lat(),
+              lng: result.geometry.location.lng()
+            },
+            formattedAddress: result.formatted_address
+          });
+        } else {
+          console.error('Geocoding failed with status:', status);
+          resolve(null);
+        }
+      });
+    });
   } catch (error) {
     console.error('Geocoding error:', error);
     return null;
@@ -1876,4 +1891,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-}
+                }

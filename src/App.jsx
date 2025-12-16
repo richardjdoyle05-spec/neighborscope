@@ -1639,77 +1639,66 @@ function ExplorationView({ property, nearbyData, onBack }) {
                       </div>
                     )}
                     
-                    {/* Smart Tour Overlay - INSIDE Street View container */}
+                    {/* Smart Tour Overlay - Compact version */}
                     {isTourActive && currentPOI && (
-                      <div className="absolute top-4 left-4 right-4 bg-white rounded-xl shadow-2xl border-4 border-purple-500 p-5 z-[100]">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              {currentPOI.type === 'start' ? (
-                                <MapPin size={28} className="text-purple-600" />
-                              ) : (
-                                <Navigation size={28} className="text-blue-500" />
-                              )}
-                              <div>
-                                <h4 className="font-bold text-slate-900 text-xl">{currentPOI.name}</h4>
-                                <p className="text-sm text-slate-600 mt-1">{currentPOI.direction}</p>
-                              </div>
+                      <div className="absolute top-2 left-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-xl border-2 border-purple-500 p-3 z-[100]">
+                        <div className="flex items-center justify-between gap-3">
+                          {/* Left: POI Info */}
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {currentPOI.type === 'start' ? (
+                              <MapPin size={18} className="text-purple-600 flex-shrink-0" />
+                            ) : (
+                              <Navigation size={18} className="text-blue-500 flex-shrink-0" />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-bold text-slate-900 text-sm truncate">{currentPOI.name}</h4>
+                              <p className="text-xs text-slate-600 truncate">{currentPOI.direction}</p>
                             </div>
                           </div>
-                        </div>
-                        
-                        {/* Progress Bar */}
-                        <div className="mb-3">
-                          <div className="w-full bg-slate-200 rounded-full h-2">
-                            <div 
-                              className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-500"
-                              style={{ width: `${tourProgress}%` }}
-                            />
-                          </div>
-                          <p className="text-xs text-slate-500 mt-1 text-center">{tourProgress}% complete</p>
-                        </div>
-
-                        {/* Tour Controls */}
-                        <div className="flex items-center gap-2">
-                          {!tourPaused ? (
-                            <button
-                              onClick={pauseTour}
-                              className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                            >
-                              <span>⏸</span> Pause
-                            </button>
-                          ) : (
-                            <button
-                              onClick={resumeTour}
-                              className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                            >
-                              <span>▶️</span> Resume
-                            </button>
-                          )}
-                          <button
-                            onClick={stopTour}
-                            className="flex-1 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                          >
-                            <span>⏹</span> Stop
-                          </button>
                           
-                          {/* Speed Control */}
-                          <div className="flex gap-1">
-                            {['slow', 'normal', 'fast'].map(speed => (
+                          {/* Right: Controls */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {/* Progress indicator */}
+                            <div className="text-xs font-medium text-purple-600 whitespace-nowrap">{tourProgress}%</div>
+                            
+                            {/* Pause/Resume */}
+                            {!tourPaused ? (
                               <button
-                                key={speed}
-                                onClick={() => setTourSpeed(speed)}
-                                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                                  tourSpeed === speed
-                                    ? 'bg-purple-600 text-white'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                }`}
+                                onClick={pauseTour}
+                                className="p-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs"
+                                title="Pause"
                               >
-                                {speed === 'slow' && '🐌'}
-                                {speed === 'normal' && '⚡'}
-                                {speed === 'fast' && '🚀'}
+                                ⏸
                               </button>
-                            ))}
+                            ) : (
+                              <button
+                                onClick={resumeTour}
+                                className="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded text-xs"
+                                title="Resume"
+                              >
+                                ▶️
+                              </button>
+                            )}
+                            
+                            {/* Stop */}
+                            <button
+                              onClick={stopTour}
+                              className="p-1.5 bg-slate-600 hover:bg-slate-700 text-white rounded text-xs"
+                              title="Stop Tour"
+                            >
+                              ⏹
+                            </button>
+                            
+                            {/* Speed selector */}
+                            <select 
+                              value={tourSpeed} 
+                              onChange={(e) => setTourSpeed(e.target.value)}
+                              className="text-xs border border-slate-300 rounded px-1 py-1"
+                            >
+                              <option value="slow">🐌</option>
+                              <option value="normal">⚡</option>
+                              <option value="fast">🚀</option>
+                            </select>
                           </div>
                         </div>
                       </div>
@@ -2244,4 +2233,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-                }
+                  }

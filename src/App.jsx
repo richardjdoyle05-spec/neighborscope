@@ -1230,6 +1230,16 @@ function ExplorationView({ property, nearbyData, onBack }) {
   const mapRef = useRef(null);
   const streetViewRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  
+  // Smart Tour state
+  const [isTourActive, setIsTourActive] = useState(false);
+  const [tourPaused, setTourPaused] = useState(false);
+  const [tourSpeed, setTourSpeed] = useState('normal'); // slow, normal, fast
+  const [tourProgress, setTourProgress] = useState(0);
+  const [currentPOI, setCurrentPOI] = useState(null);
+  const streetViewInstanceRef = useRef(null);
+  const tourIntervalRef = useRef(null);
+  const tourStepRef = useRef(0);
 
   const handleContactSubmit = () => {
     // Log to console so you can see it working
@@ -1252,6 +1262,189 @@ function ExplorationView({ property, nearbyData, onBack }) {
     // Hide success after 5 seconds
     setTimeout(() => setShowSuccess(false), 5000);
   };
+
+  // Smart Tour: Calculate waypoints from property to POIs and back
+  const calculateTourWaypoints = () => {
+    if (!nearbyData) return [];
+    
+    const waypoints = [];
+    const startPoint = { lat: property.coords.lat, lng: property.coords.lng, type: 'start', name: 'Property' };
+    
+    waypoints.push(startPoint);
+    
+    // Add schools (up to 2)
+    if (nearbyData.schools && nearbyData.schools.length > 0) {
+      nearbyData.schools.slice(0, 2).forEach(school => {
+        if (school.distance < 1) { // Only nearby schools
+          waypoints.push({
+            lat: property.coords.lat + (Math.random() - 0.5) * 0.01,
+            lng: property.coords.lng + (Math.random() - 0.5) * 0.01,
+            type: 'school',
+            name: school.name,
+            distance: school.distance,
+            walkTime: school.walkTime
+          });
+        }
+      });
+    }
+    
+    // Add transit (up to 1)
+    if (nearbyData.transit && nearbyData.transit.length > 0) {
+      const nearestTransit = nearbyData.transit[0];
+      if (nearestTransit.distance < 1) {
+        waypoints.push({
+          lat: property.coords.lat + (Math.random() - 0.5) * 0.01,
+          lng: property.coords.lng + (Math.random() - 0.5) * 0.01,
+          type: 'transit',
+          name: nearestTransit.name,
+          distance: nearestTransit.distance,
+          walkTime: nearestTransit.walkTime
+        });
+      }
+    }
+    
+    // Add amenities (up to 2)
+    if (nearbyData.amenities && nearbyData.amenities.length > 0) {
+      nearbyData.amenities.slice(0, 2).forEach(amenity => {
+        if (amenity.distance < 1) {
+          waypoints.push({
+            lat: property.coords.lat + (Math.random() - 0.5) * 0.01,
+            lng: property.coords.lng + (Math.random() - 0.5) * 0.01,
+            type: amenity.type.toLowerCase(),
+            name: amenity.name,
+            distance: amenity.distance
+          });
+        }
+      });
+    }
+    
+    // Return to start
+    waypoints.push(startPoint);
+    
+    return waypoints;
+  };
+
+  // Calculate heading between two points
+  const calculateHeading = (from, to) => {
+    const lat1 = from.lat * Math.PI / 180;
+    const lat2 = to.lat * Math.PI / 180;
+    const dLng = (to.lng - from.lng) * Math.PI / 180;
+    
+    const y = Math.sin(dLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    const heading = Math.atan2(y, x) * 180 / Math.PI;
+    
+    return (heading + 360) % 360;
+  };
+
+  // Start Smart Tour
+  const startTour = () => {
+    if (!streetViewInstanceRef.current || !nearbyData) {
+      console.log('Street View or nearby data not ready');
+      return;
+    }
+
+    console.log('🚀 Starting Smart Tour...');
+    
+    const waypoints = calculateTourWaypoints();
+    
+    if (waypoints.length < 2) {
+      console.log('Not enough waypoints for tour');
+      return;
+    }
+
+    setIsTourActive(true);
+    setTourPaused(false);
+    setTourProgress(0);
+    tourStepRef.current = 0;
+
+    runTourStep(waypoints);
+  };
+
+  // Run tour step
+  const runTourStep = (waypoints) => {
+    if (!streetViewInstanceRef.current) return;
+
+    const step = tourStepRef.current;
+    
+    if (step >= waypoints.length) {
+      // Tour complete
+      console.log('✅ Tour complete!');
+      stopTour();
+      return;
+    }
+
+    const currentWaypoint = waypoints[step];
+    const nextWaypoint = waypoints[step + 1];
+
+    console.log(`📍 Step ${step + 1}/${waypoints.length}: ${currentWaypoint.name}`);
+
+    // Update current POI
+    setCurrentPOI(currentWaypoint);
+    setTourProgress(Math.round((step / waypoints.length) * 100));
+
+    // Move to waypoint
+    const heading = nextWaypoint ? calculateHeading(currentWaypoint, nextWaypoint) : 0;
+    
+    streetViewInstanceRef.current.setPosition(currentWaypoint);
+    streetViewInstanceRef.current.setPov({
+      heading: heading,
+      pitch: 0
+    });
+
+    // Determine delay based on speed
+    const delays = {
+      slow: 4000,
+      normal: 2500,
+      fast: 1500
+    };
+    const delay = delays[tourSpeed] || 2500;
+
+    // Schedule next step
+    tourIntervalRef.current = setTimeout(() => {
+      tourStepRef.current++;
+      runTourStep(waypoints);
+    }, delay);
+  };
+
+  // Pause tour
+  const pauseTour = () => {
+    setTourPaused(true);
+    if (tourIntervalRef.current) {
+      clearTimeout(tourIntervalRef.current);
+    }
+  };
+
+  // Resume tour
+  const resumeTour = () => {
+    if (!streetViewInstanceRef.current || !nearbyData) return;
+    
+    setTourPaused(false);
+    const waypoints = calculateTourWaypoints();
+    runTourStep(waypoints);
+  };
+
+  // Stop tour
+  const stopTour = () => {
+    setIsTourActive(false);
+    setTourPaused(false);
+    setTourProgress(0);
+    setCurrentPOI(null);
+    tourStepRef.current = 0;
+    
+    if (tourIntervalRef.current) {
+      clearTimeout(tourIntervalRef.current);
+    }
+  };
+
+  // Cleanup tour on unmount
+  useEffect(() => {
+    return () => {
+      if (tourIntervalRef.current) {
+        clearTimeout(tourIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Check if Google Maps is loaded (from index.html script)
   useEffect(() => {
@@ -1347,6 +1540,9 @@ function ExplorationView({ property, nearbyData, onBack }) {
       }
     );
     
+    // Store panorama instance for Smart Tour
+    streetViewInstanceRef.current = panorama;
+    
     // Add keyboard navigation instructions
     console.log('🎮 Navigation Tips:');
     console.log('  • Click anywhere on the road to teleport');
@@ -1428,7 +1624,7 @@ function ExplorationView({ property, nearbyData, onBack }) {
                 <>
                   <div 
                     ref={streetViewRef}
-                    className="w-full h-[450px] bg-slate-200"
+                    className="w-full h-[450px] bg-slate-200 relative"
                   >
                     {!mapLoaded && (
                       <div className="w-full h-full flex items-center justify-center">
@@ -1440,10 +1636,100 @@ function ExplorationView({ property, nearbyData, onBack }) {
                     )}
                   </div>
                   
-                  {/* Back to Map */}
-                  <div className="p-4 bg-slate-50 border-t border-slate-200">
+                  {/* Smart Tour Overlay */}
+                  {isTourActive && currentPOI && (
+                    <div className="absolute top-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl p-4 z-10">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            {currentPOI.type === 'school' && <School size={18} className="text-blue-500" />}
+                            {currentPOI.type === 'transit' && <Train size={18} className="text-green-500" />}
+                            {currentPOI.type === 'grocery' && <ShoppingBag size={18} className="text-orange-500" />}
+                            {currentPOI.type === 'park' && <MapPin size={18} className="text-green-600" />}
+                            {currentPOI.type === 'start' && <MapPin size={18} className="text-purple-600" />}
+                            <h4 className="font-bold text-slate-900">{currentPOI.name}</h4>
+                          </div>
+                          {currentPOI.distance && (
+                            <p className="text-sm text-slate-600">
+                              {currentPOI.distance} mi away{currentPOI.walkTime && ` • ${currentPOI.walkTime} min walk`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="mb-3">
+                        <div className="w-full bg-slate-200 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${tourProgress}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 text-center">{tourProgress}% complete</p>
+                      </div>
+
+                      {/* Tour Controls */}
+                      <div className="flex items-center gap-2">
+                        {!tourPaused ? (
+                          <button
+                            onClick={pauseTour}
+                            className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                          >
+                            <span>⏸</span> Pause
+                          </button>
+                        ) : (
+                          <button
+                            onClick={resumeTour}
+                            className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                          >
+                            <span>▶️</span> Resume
+                          </button>
+                        )}
+                        <button
+                          onClick={stopTour}
+                          className="flex-1 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                        >
+                          <span>⏹</span> Stop
+                        </button>
+                        
+                        {/* Speed Control */}
+                        <div className="flex gap-1">
+                          {['slow', 'normal', 'fast'].map(speed => (
+                            <button
+                              key={speed}
+                              onClick={() => setTourSpeed(speed)}
+                              className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                                tourSpeed === speed
+                                  ? 'bg-purple-600 text-white'
+                                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              }`}
+                            >
+                              {speed === 'slow' && '🐌'}
+                              {speed === 'normal' && '⚡'}
+                              {speed === 'fast' && '🚀'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Back to Map + Smart Tour Button */}
+                  <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-2">
+                    {!isTourActive && nearbyData && (
+                      <button 
+                        onClick={startTour}
+                        className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all font-medium flex items-center justify-center gap-2"
+                      >
+                        <Eye size={18} />
+                        Start Smart Tour
+                      </button>
+                    )}
                     <button 
-                      onClick={() => setShowStreetView(false)}
+                      onClick={() => {
+                        stopTour();
+                        setShowStreetView(false);
+                      }}
                       className="w-full py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors font-medium flex items-center justify-center gap-2"
                     >
                       <MapPin size={18} />
@@ -1956,4 +2242,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-                        }
+                }

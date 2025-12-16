@@ -286,8 +286,8 @@ const fetchNearbyPlaces = async (lat, lng) => {
 const SAMPLE_PROPERTIES = [
   {
     id: 1,
-    address: "187 Columbia Heights, Brooklyn, NY 11201",
-    coords: { lat: 40.6958, lng: -73.9957 },
+    address: "250 West 94th Street, New York, NY 10025",
+    coords: { lat: 40.7944, lng: -73.9722 },
     price: "$3,200,000",
     beds: 4,
     baths: 3,
@@ -297,9 +297,9 @@ const SAMPLE_PROPERTIES = [
   },
   {
     id: 2,
-    address: "2509 Abbot Kinney Blvd, Venice, CA 90291",
-    coords: { lat: 33.9894, lng: -118.4691 },
-    price: "$2,850,000",
+    address: "1047 11th Street, Santa Monica, CA 90403",
+    coords: { lat: 34.0172, lng: -118.4965 },
+    price: "$2,950,000",
     beds: 3,
     baths: 2.5,
     lifestyleMatch: 85,
@@ -308,9 +308,9 @@ const SAMPLE_PROPERTIES = [
   },
   {
     id: 3,
-    address: "2038 N Clifton Avenue, Chicago, IL 60614",
-    coords: { lat: 41.9195, lng: -87.6538 },
-    price: "$1,950,000",
+    address: "1958 W Evergreen Avenue, Chicago, IL 60622",
+    coords: { lat: 41.9064, lng: -87.6773 },
+    price: "$1,850,000",
     beds: 4,
     baths: 3,
     lifestyleMatch: 88,
@@ -1956,4 +1956,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-}
+        }

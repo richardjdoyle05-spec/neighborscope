@@ -1280,22 +1280,44 @@ function ExplorationView({ property, nearbyData, onBack }) {
     if (!nearbyData) return [];
     
     const waypoints = [];
-    const startPoint = { lat: property.coords.lat, lng: property.coords.lng, type: 'start', name: 'Property' };
+    const startPoint = { lat: property.coords.lat, lng: property.coords.lng, type: 'start', name: 'Starting at Property' };
     
     waypoints.push(startPoint);
+    
+    console.log('🗺️ Building Smart Tour route...');
+    console.log('Starting point:', property.address);
     
     // Add schools (up to 2) - USE ACTUAL COORDINATES
     if (nearbyData.schools && nearbyData.schools.length > 0) {
       nearbyData.schools.slice(0, 2).forEach(school => {
-        if (school.distance < 1 && school.lat && school.lng) { // Only nearby schools with coordinates
+        if (school.distance < 1.5 && school.lat && school.lng) { // Increased to 1.5 miles
           waypoints.push({
-            lat: school.lat,  // ✅ ACTUAL school location
-            lng: school.lng,  // ✅ ACTUAL school location
+            lat: school.lat,
+            lng: school.lng,
             type: 'school',
             name: school.name,
             distance: school.distance,
-            walkTime: school.walkTime
+            walkTime: school.walkTime,
+            rating: school.rating
           });
+          console.log(`  📚 School: ${school.name} (${school.distance} mi)`);
+        }
+      });
+    }
+    
+    // Add cafes (up to 2) - USE ACTUAL COORDINATES
+    if (nearbyData.cafes && nearbyData.cafes.length > 0) {
+      nearbyData.cafes.slice(0, 2).forEach(cafe => {
+        if (cafe.distance < 1 && cafe.lat && cafe.lng) {
+          waypoints.push({
+            lat: cafe.lat,
+            lng: cafe.lng,
+            type: 'cafe',
+            name: cafe.name,
+            distance: cafe.distance,
+            walkTime: cafe.walkTime
+          });
+          console.log(`  ☕ Cafe: ${cafe.name} (${cafe.distance} mi)`);
         }
       });
     }
@@ -1303,35 +1325,40 @@ function ExplorationView({ property, nearbyData, onBack }) {
     // Add transit (up to 1) - USE ACTUAL COORDINATES
     if (nearbyData.transit && nearbyData.transit.length > 0) {
       const nearestTransit = nearbyData.transit[0];
-      if (nearestTransit.distance < 1 && nearestTransit.lat && nearestTransit.lng) {
+      if (nearestTransit.distance < 1.5 && nearestTransit.lat && nearestTransit.lng) {
         waypoints.push({
-          lat: nearestTransit.lat,  // ✅ ACTUAL transit location
-          lng: nearestTransit.lng,  // ✅ ACTUAL transit location
+          lat: nearestTransit.lat,
+          lng: nearestTransit.lng,
           type: 'transit',
           name: nearestTransit.name,
           distance: nearestTransit.distance,
           walkTime: nearestTransit.walkTime
         });
+        console.log(`  🚇 Transit: ${nearestTransit.name} (${nearestTransit.distance} mi)`);
       }
     }
     
     // Add amenities (up to 2) - USE ACTUAL COORDINATES
     if (nearbyData.amenities && nearbyData.amenities.length > 0) {
       nearbyData.amenities.slice(0, 2).forEach(amenity => {
-        if (amenity.distance < 1 && amenity.lat && amenity.lng) {
+        if (amenity.distance < 1.5 && amenity.lat && amenity.lng) {
           waypoints.push({
-            lat: amenity.lat,  // ✅ ACTUAL amenity location
-            lng: amenity.lng,  // ✅ ACTUAL amenity location
+            lat: amenity.lat,
+            lng: amenity.lng,
             type: amenity.type.toLowerCase(),
             name: amenity.name,
             distance: amenity.distance
           });
+          console.log(`  🏪 ${amenity.type}: ${amenity.name} (${amenity.distance} mi)`);
         }
       });
     }
     
     // Return to start
-    waypoints.push(startPoint);
+    waypoints.push({...startPoint, name: 'Back to Property'});
+    
+    console.log(`✅ Tour has ${waypoints.length} stops`);
+    return waypoints;
     
     return waypoints;
   };
@@ -1352,19 +1379,24 @@ function ExplorationView({ property, nearbyData, onBack }) {
   // Start Smart Tour
   const startTour = () => {
     if (!streetViewInstanceRef.current || !nearbyData) {
-      console.log('Street View or nearby data not ready');
+      console.log('❌ Street View or nearby data not ready');
+      alert('Please wait for neighborhood data to load first!');
       return;
     }
 
     console.log('🚀 Starting Smart Tour...');
+    console.log('Property:', property.address);
     
     const waypoints = calculateTourWaypoints();
     
-    if (waypoints.length < 2) {
-      console.log('Not enough waypoints for tour');
+    if (waypoints.length < 3) {
+      console.log('❌ Not enough waypoints for tour. Found:', waypoints.length);
+      console.log('Waypoints:', waypoints);
+      alert(`Not enough nearby locations found! Only found ${waypoints.length - 2} locations. Try a different address in a more urban area.`);
       return;
     }
 
+    console.log(`✅ Tour ready with ${waypoints.length} stops!`);
     setIsTourActive(true);
     setTourPaused(false);
     setTourProgress(0);
@@ -1406,11 +1438,11 @@ function ExplorationView({ property, nearbyData, onBack }) {
 
     // Determine delay based on speed
     const delays = {
-      slow: 4000,
-      normal: 2500,
-      fast: 1500
+      slow: 5000,   // 5 seconds per stop
+      normal: 4000, // 4 seconds per stop (was 2.5)
+      fast: 2500    // 2.5 seconds per stop (was 1.5)
     };
-    const delay = delays[tourSpeed] || 2500;
+    const delay = delays[tourSpeed] || 4000;
 
     // Schedule next step
     tourIntervalRef.current = setTimeout(() => {
@@ -1650,20 +1682,29 @@ function ExplorationView({ property, nearbyData, onBack }) {
                   
                   {/* Smart Tour Overlay */}
                   {isTourActive && currentPOI && (
-                    <div className="absolute top-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl p-4 z-10">
-                      <div className="flex items-start justify-between mb-2">
+                    <div className="absolute top-4 left-4 right-4 bg-white rounded-xl shadow-2xl border-4 border-purple-500 p-5 z-10">
+                      <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            {currentPOI.type === 'school' && <School size={18} className="text-blue-500" />}
-                            {currentPOI.type === 'transit' && <Train size={18} className="text-green-500" />}
-                            {currentPOI.type === 'grocery' && <ShoppingBag size={18} className="text-orange-500" />}
-                            {currentPOI.type === 'park' && <MapPin size={18} className="text-green-600" />}
-                            {currentPOI.type === 'start' && <MapPin size={18} className="text-purple-600" />}
-                            <h4 className="font-bold text-slate-900">{currentPOI.name}</h4>
+                          <div className="flex items-center gap-3 mb-2">
+                            {currentPOI.type === 'school' && <School size={24} className="text-blue-500" />}
+                            {currentPOI.type === 'transit' && <Train size={24} className="text-green-500" />}
+                            {currentPOI.type === 'cafe' && <Coffee size={24} className="text-amber-600" />}
+                            {currentPOI.type === 'grocery' && <ShoppingBag size={24} className="text-orange-500" />}
+                            {currentPOI.type === 'park' && <TreePine size={24} className="text-green-600" />}
+                            {currentPOI.type === 'start' && <MapPin size={24} className="text-purple-600" />}
+                            <div>
+                              <h4 className="font-bold text-slate-900 text-lg">{currentPOI.name}</h4>
+                              <p className="text-xs text-slate-500 uppercase tracking-wide">{currentPOI.type}</p>
+                            </div>
                           </div>
-                          {currentPOI.distance && (
-                            <p className="text-sm text-slate-600">
-                              {currentPOI.distance} mi away{currentPOI.walkTime && ` • ${currentPOI.walkTime} min walk`}
+                          {currentPOI.distance && currentPOI.distance > 0 && (
+                            <p className="text-sm text-slate-700 font-medium">
+                              📍 {currentPOI.distance} mi from property{currentPOI.walkTime && ` • ${currentPOI.walkTime} min walk`}
+                            </p>
+                          )}
+                          {currentPOI.rating && (
+                            <p className="text-sm text-slate-600 mt-1">
+                              ⭐ Rating: {currentPOI.rating}/10
                             </p>
                           )}
                         </div>
@@ -2254,4 +2295,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-              }
+                      }

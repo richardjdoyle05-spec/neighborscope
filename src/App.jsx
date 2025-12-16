@@ -286,9 +286,9 @@ const fetchNearbyPlaces = async (lat, lng) => {
 const SAMPLE_PROPERTIES = [
   {
     id: 1,
-    address: "250 West 94th Street, New York, NY 10025",
-    coords: { lat: 40.7944, lng: -73.9722 },
-    price: "$3,200,000",
+    address: "722 Steiner Street, San Francisco, CA 94117",
+    coords: { lat: 37.7765, lng: -122.4350 },
+    price: "$4,200,000",
     beds: 4,
     baths: 3,
     lifestyleMatch: 92,
@@ -297,20 +297,20 @@ const SAMPLE_PROPERTIES = [
   },
   {
     id: 2,
-    address: "1047 11th Street, Santa Monica, CA 90403",
-    coords: { lat: 34.0172, lng: -118.4965 },
-    price: "$2,950,000",
-    beds: 3,
-    baths: 2.5,
+    address: "131 Pierrepont Street, Brooklyn, NY 11201",
+    coords: { lat: 40.6949, lng: -73.9957 },
+    price: "$3,800,000",
+    beds: 4,
+    baths: 3.5,
     lifestyleMatch: 85,
     commuteTime: 51,
     dealBreakers: 0
   },
   {
     id: 3,
-    address: "1958 W Evergreen Avenue, Chicago, IL 60622",
-    coords: { lat: 41.9064, lng: -87.6773 },
-    price: "$1,850,000",
+    address: "1800 N Burling Street, Chicago, IL 60614",
+    coords: { lat: 41.9149, lng: -87.6538 },
+    price: "$2,200,000",
     beds: 4,
     baths: 3,
     lifestyleMatch: 88,
@@ -1956,4 +1956,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-        }
+                        }

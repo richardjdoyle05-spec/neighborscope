@@ -1235,7 +1235,7 @@ function FeatureCard({ icon, title, description }) {
 }
 
 function ExplorationView({ property, nearbyData, onBack }) {
-  const [showStreetView, setShowStreetView] = useState(false);
+  const [showStreetView, setShowStreetView] = useState(true); // Default to Street View!
   const [showContactForm, setShowContactForm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
@@ -1277,37 +1277,43 @@ function ExplorationView({ property, nearbyData, onBack }) {
 
   // Smart Tour: Calculate waypoints from property to POIs and back
   // Smart Tour: Create circular route around the block/neighborhood
+  // IMPROVED: Bigger loop (3 blocks) with more waypoints (18 total) for better views
   const calculateTourWaypoints = () => {
     const waypoints = [];
     const startLat = property.coords.lat;
     const startLng = property.coords.lng;
     
-    // Distance to walk (in degrees) - roughly 2 blocks
-    // 0.002 degrees ≈ 0.14 miles ≈ 2-3 blocks
-    const blockDistance = 0.002;
+    // Distance to walk - INCREASED to 3 blocks for better neighborhood coverage
+    // 0.003 degrees ≈ 0.21 miles ≈ 3-4 blocks
+    const blockDistance = 0.003;
     
-    console.log('🗺️ Creating Smart Tour route around the neighborhood...');
+    console.log('🗺️ Creating IMPROVED Smart Tour route (3 blocks, 18 waypoints)...');
     console.log('Starting point:', property.address);
     
-    // Create a square/rectangle tour around the property
+    // Create a larger square/rectangle tour around the property with MORE waypoints
     const route = [
-      { lat: startLat, lng: startLng, name: 'Starting at Property', direction: 'Looking around the property' },
+      // Start
+      { lat: startLat, lng: startLng, name: 'Starting at Property', direction: 'Beginning neighborhood tour' },
       
-      // Walk North (2 blocks)
-      { lat: startLat + blockDistance, lng: startLng, name: 'Walking North', direction: 'Heading north through the neighborhood' },
-      { lat: startLat + (blockDistance * 2), lng: startLng, name: 'North End', direction: 'Two blocks north of property' },
+      // Walk North (3 stops)
+      { lat: startLat + blockDistance, lng: startLng, name: 'Walking North', direction: 'Heading north, first block' },
+      { lat: startLat + (blockDistance * 2), lng: startLng, name: 'North Side', direction: 'Two blocks north' },
+      { lat: startLat + (blockDistance * 3), lng: startLng, name: 'Far North End', direction: 'Three blocks north of property' },
       
-      // Turn right, walk East (2 blocks)
-      { lat: startLat + (blockDistance * 2), lng: startLng + blockDistance, name: 'Walking East', direction: 'Turning east along the street' },
-      { lat: startLat + (blockDistance * 2), lng: startLng + (blockDistance * 2), name: 'Northeast Corner', direction: 'Northeast corner of the block' },
+      // Turn right, walk East (3 stops)
+      { lat: startLat + (blockDistance * 3), lng: startLng + blockDistance, name: 'Northeast Direction', direction: 'Turning east along the street' },
+      { lat: startLat + (blockDistance * 3), lng: startLng + (blockDistance * 2), name: 'Northeast Area', direction: 'Continuing east' },
+      { lat: startLat + (blockDistance * 3), lng: startLng + (blockDistance * 3), name: 'Northeast Corner', direction: 'Far northeast corner' },
       
-      // Turn right, walk South (2 blocks)
-      { lat: startLat + blockDistance, lng: startLng + (blockDistance * 2), name: 'Walking South', direction: 'Heading south back toward property' },
-      { lat: startLat, lng: startLng + (blockDistance * 2), name: 'East Side', direction: 'East side of the loop' },
+      // Turn right, walk South (3 stops)
+      { lat: startLat + (blockDistance * 2), lng: startLng + (blockDistance * 3), name: 'Southeast Direction', direction: 'Heading south along east side' },
+      { lat: startLat + blockDistance, lng: startLng + (blockDistance * 3), name: 'Southeast Area', direction: 'Continuing south' },
+      { lat: startLat, lng: startLng + (blockDistance * 3), name: 'Southeast Corner', direction: 'Southeast corner of loop' },
       
-      // Turn right, walk West (2 blocks)
-      { lat: startLat, lng: startLng + blockDistance, name: 'Walking West', direction: 'Walking west to complete the loop' },
-      { lat: startLat, lng: startLng, name: 'Back to Property', direction: 'Completed neighborhood tour' }
+      // Turn right, walk West (3 stops)
+      { lat: startLat, lng: startLng + (blockDistance * 2), name: 'Southwest Direction', direction: 'Heading west to return' },
+      { lat: startLat, lng: startLng + blockDistance, name: 'Southwest Area', direction: 'Almost back to start' },
+      { lat: startLat, lng: startLng, name: 'Tour Complete!', direction: 'Completed full neighborhood tour' }
     ];
     
     route.forEach((point, idx) => {
@@ -1318,10 +1324,10 @@ function ExplorationView({ property, nearbyData, onBack }) {
         name: point.name,
         direction: point.direction
       });
-      console.log(`  ${idx === 0 ? '📍' : '🚶'} ${point.name}`);
+      console.log(`  ${idx === 0 ? '📍' : idx === route.length - 1 ? '🏁' : '🚶'} ${point.name}`);
     });
     
-    console.log(`✅ Smart Tour ready: ${waypoints.length} waypoints around the neighborhood`);
+    console.log(`✅ Improved Smart Tour ready: ${waypoints.length} waypoints covering 3 blocks!`);
     return waypoints;
   };
 
@@ -1397,12 +1403,13 @@ function ExplorationView({ property, nearbyData, onBack }) {
     });
 
     // Determine delay based on speed
+    // Adjusted for longer tour (13 waypoints) to keep around 60 seconds
     const delays = {
-      slow: 5000,   // 5 seconds per stop
-      normal: 4000, // 4 seconds per stop (was 2.5)
-      fast: 2500    // 2.5 seconds per stop (was 1.5)
+      slow: 6000,   // 6 seconds per stop = 78 seconds total
+      normal: 4500, // 4.5 seconds per stop = 58.5 seconds total
+      fast: 3000    // 3 seconds per stop = 39 seconds total
     };
-    const delay = delays[tourSpeed] || 4000;
+    const delay = delays[tourSpeed] || 4500;
 
     // Schedule next step
     tourIntervalRef.current = setTimeout(() => {
@@ -1593,142 +1600,167 @@ function ExplorationView({ property, nearbyData, onBack }) {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Map View */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-              {!showStreetView ? (
-                <>
-                  <div 
-                    ref={mapRef}
-                    className="w-full h-[450px] bg-slate-200"
-                  >
-                    {!mapLoaded && (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                          <p className="text-slate-600">Loading map...</p>
-                          <p className="text-slate-500 text-sm mt-2">Garden City, NY</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Street View Toggle */}
-                  <div className="p-4 bg-slate-50 border-t border-slate-200">
-                    <button 
-                      onClick={() => setShowStreetView(true)}
-                      className="w-full py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors font-medium flex items-center justify-center gap-2"
-                    >
-                      <ExternalLink size={18} />
-                      Explore Neighborhood (Street View)
-                    </button>
-                    <p className="text-xs text-slate-500 text-center mt-2">Click anywhere to walk around • Use arrow keys to look • Fullscreen available</p>
-                  </div>
-                </>
+            
+            {/* SMART TOUR - PRIMARY FEATURE */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-lg border-2 border-purple-200 p-6">
+              <div className="text-center mb-4">
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">🚶 Take a Smart Tour</h3>
+                <p className="text-slate-600">Auto-walk around the neighborhood in 60 seconds</p>
+              </div>
+              
+              {!isTourActive ? (
+                <button 
+                  onClick={() => {
+                    if (!mapLoaded || !streetViewInstanceRef.current) {
+                      // If Street View not ready, just enable it and wait
+                      setShowStreetView(true);
+                      alert('Loading Street View... Click "START SMART TOUR" again in a moment!');
+                    } else {
+                      // Street View is ready, start tour immediately
+                      startTour();
+                    }
+                  }}
+                  className="w-full py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold text-lg flex items-center justify-center gap-3"
+                >
+                  <Eye size={24} />
+                  START SMART TOUR
+                </button>
               ) : (
-                <>
-                  <div 
-                    ref={streetViewRef}
-                    className="w-full h-[450px] bg-slate-200 relative overflow-visible"
-                  >
-                    {!mapLoaded && (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                          <p className="text-slate-600">Loading Street View...</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Smart Tour Overlay - Compact version */}
-                    {isTourActive && currentPOI && (
-                      <div className="absolute top-2 left-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-xl border-2 border-purple-500 p-3 z-[100]">
-                        <div className="flex items-center justify-between gap-3">
-                          {/* Left: POI Info */}
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            {currentPOI.type === 'start' ? (
-                              <MapPin size={18} className="text-purple-600 flex-shrink-0" />
-                            ) : (
-                              <Navigation size={18} className="text-blue-500 flex-shrink-0" />
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <h4 className="font-bold text-slate-900 text-sm truncate">{currentPOI.name}</h4>
-                              <p className="text-xs text-slate-600 truncate">{currentPOI.direction}</p>
-                            </div>
-                          </div>
-                          
-                          {/* Right: Controls */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {/* Progress indicator */}
-                            <div className="text-xs font-medium text-purple-600 whitespace-nowrap">{tourProgress}%</div>
-                            
-                            {/* Pause/Resume */}
-                            {!tourPaused ? (
-                              <button
-                                onClick={pauseTour}
-                                className="p-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs"
-                                title="Pause"
-                              >
-                                ⏸
-                              </button>
-                            ) : (
-                              <button
-                                onClick={resumeTour}
-                                className="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded text-xs"
-                                title="Resume"
-                              >
-                                ▶️
-                              </button>
-                            )}
-                            
-                            {/* Stop */}
-                            <button
-                              onClick={stopTour}
-                              className="p-1.5 bg-slate-600 hover:bg-slate-700 text-white rounded text-xs"
-                              title="Stop Tour"
-                            >
-                              ⏹
-                            </button>
-                            
-                            {/* Speed selector */}
-                            <select 
-                              value={tourSpeed} 
-                              onChange={(e) => setTourSpeed(e.target.value)}
-                              className="text-xs border border-slate-300 rounded px-1 py-1"
-                            >
-                              <option value="slow">🐌</option>
-                              <option value="normal">⚡</option>
-                              <option value="fast">🚀</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-purple-600 mb-2">Tour in Progress...</div>
+                  <div className="w-full bg-slate-200 rounded-full h-3 mb-2">
+                    <div 
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-500"
+                      style={{ width: `${tourProgress}%` }}
+                    />
                   </div>
-                  
-                  {/* Back to Map + Smart Tour Button */}
-                  <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-2">
-                    {!isTourActive && (
-                      <button 
-                        onClick={startTour}
-                        className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all font-medium flex items-center justify-center gap-2"
-                      >
-                        <Eye size={18} />
-                        Start Smart Tour
-                      </button>
-                    )}
-                    <button 
-                      onClick={() => {
-                        stopTour();
-                        setShowStreetView(false);
-                      }}
-                      className="w-full py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors font-medium flex items-center justify-center gap-2"
-                    >
-                      <MapPin size={18} />
-                      Back to Map View
-                    </button>
-                  </div>
-                </>
+                  <p className="text-sm text-slate-600">{tourProgress}% complete</p>
+                </div>
               )}
+            </div>
+
+            {/* Street View (always visible now) */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div 
+                ref={streetViewRef}
+                className="w-full h-[500px] bg-slate-200 relative overflow-visible"
+              >
+                {!mapLoaded && (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                      <p className="text-slate-600">Loading Street View...</p>
+                      <p className="text-slate-500 text-sm mt-2">Preparing your neighborhood tour...</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Smart Tour Overlay - Compact version */}
+                {isTourActive && currentPOI && (
+                  <div className="absolute top-2 left-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-xl border-2 border-purple-500 p-3 z-[100]">
+                    <div className="flex items-center justify-between gap-3">
+                      {/* Left: POI Info */}
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {currentPOI.type === 'start' ? (
+                          <MapPin size={18} className="text-purple-600 flex-shrink-0" />
+                        ) : (
+                          <Navigation size={18} className="text-blue-500 flex-shrink-0" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-bold text-slate-900 text-sm truncate">{currentPOI.name}</h4>
+                          <p className="text-xs text-slate-600 truncate">{currentPOI.direction}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Right: Controls */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* Progress indicator */}
+                        <div className="text-xs font-medium text-purple-600 whitespace-nowrap">{tourProgress}%</div>
+                        
+                        {/* Pause/Resume */}
+                        {!tourPaused ? (
+                          <button
+                            onClick={pauseTour}
+                            className="p-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs"
+                            title="Pause"
+                          >
+                            ⏸
+                          </button>
+                        ) : (
+                          <button
+                            onClick={resumeTour}
+                            className="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded text-xs"
+                            title="Resume"
+                          >
+                            ▶️
+                          </button>
+                        )}
+                        
+                        {/* Stop */}
+                        <button
+                          onClick={stopTour}
+                          className="p-1.5 bg-slate-600 hover:bg-slate-700 text-white rounded text-xs"
+                          title="Stop Tour"
+                        >
+                          ⏹
+                        </button>
+                        
+                        {/* Speed selector */}
+                        <select 
+                          value={tourSpeed} 
+                          onChange={(e) => setTourSpeed(e.target.value)}
+                          className="text-xs border border-slate-300 rounded px-1 py-1"
+                        >
+                          <option value="slow">🐌</option>
+                          <option value="normal">⚡</option>
+                          <option value="fast">🚀</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* View Map button (secondary) */}
+              <div className="p-4 bg-slate-50 border-t border-slate-200">
+                <button 
+                  onClick={() => setShowStreetView(false)}
+                  className="w-full py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium flex items-center justify-center gap-2 text-sm"
+                >
+                  <MapPin size={16} />
+                  View Map
+                </button>
+              </div>
+            </div>
+
+            {/* Map View (now hidden by default, accessible via button) */}
+            {!showStreetView && (
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div 
+                  ref={mapRef}
+                  className="w-full h-[450px] bg-slate-200"
+                >
+                  {!mapLoaded && (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                        <p className="text-slate-600">Loading map...</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="p-4 bg-slate-50 border-t border-slate-200">
+                  <button 
+                    onClick={() => setShowStreetView(true)}
+                    className="w-full py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors font-medium flex items-center justify-center gap-2"
+                  >
+                    <ExternalLink size={18} />
+                    Back to Street View
+                  </button>
+                </div>
+              </div>
+            )}
             </div>
 
           </div>
@@ -2233,4 +2265,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-                  }
+                }

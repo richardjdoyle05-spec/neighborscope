@@ -181,7 +181,9 @@ const fetchNearbyPlaces = async (lat, lng) => {
         walkTime: calculateWalkTime(distance),
         rating: place.rating ? Math.round(place.rating * 2) : 8,
         type: place.types.includes('primary_school') ? 'Public Elementary' : 
-              place.types.includes('secondary_school') ? 'Public High School' : 'School'
+              place.types.includes('secondary_school') ? 'Public High School' : 'School',
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng()
       };
     });
 
@@ -199,7 +201,9 @@ const fetchNearbyPlaces = async (lat, lng) => {
         distance: parseFloat(distance),
         walkTime: calculateWalkTime(distance),
         line: place.vicinity || 'Transit Station',
-        toPennStation: null // We don't have this data
+        toPennStation: null, // We don't have this data
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng()
       };
     });
 
@@ -215,7 +219,9 @@ const fetchNearbyPlaces = async (lat, lng) => {
       return {
         name: place.name,
         distance: parseFloat(distance),
-        walkTime: calculateWalkTime(distance)
+        walkTime: calculateWalkTime(distance),
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng()
       };
     });
 
@@ -233,7 +239,9 @@ const fetchNearbyPlaces = async (lat, lng) => {
         name: grocery.name,
         distance: parseFloat(distance),
         type: 'Grocery',
-        icon: 'shopping'
+        icon: 'shopping',
+        lat: grocery.geometry.location.lat(),
+        lng: grocery.geometry.location.lng()
       });
     }
 
@@ -251,7 +259,9 @@ const fetchNearbyPlaces = async (lat, lng) => {
         name: park.name,
         distance: parseFloat(distance),
         type: 'Park',
-        icon: 'park'
+        icon: 'park',
+        lat: park.geometry.location.lat(),
+        lng: park.geometry.location.lng()
       });
     }
 
@@ -269,7 +279,9 @@ const fetchNearbyPlaces = async (lat, lng) => {
         name: mall.name,
         distance: parseFloat(distance),
         type: 'Shopping',
-        icon: 'shopping'
+        icon: 'shopping',
+        lat: mall.geometry.location.lat(),
+        lng: mall.geometry.location.lng()
       });
     }
 
@@ -1272,13 +1284,13 @@ function ExplorationView({ property, nearbyData, onBack }) {
     
     waypoints.push(startPoint);
     
-    // Add schools (up to 2)
+    // Add schools (up to 2) - USE ACTUAL COORDINATES
     if (nearbyData.schools && nearbyData.schools.length > 0) {
       nearbyData.schools.slice(0, 2).forEach(school => {
-        if (school.distance < 1) { // Only nearby schools
+        if (school.distance < 1 && school.lat && school.lng) { // Only nearby schools with coordinates
           waypoints.push({
-            lat: property.coords.lat + (Math.random() - 0.5) * 0.01,
-            lng: property.coords.lng + (Math.random() - 0.5) * 0.01,
+            lat: school.lat,  // ✅ ACTUAL school location
+            lng: school.lng,  // ✅ ACTUAL school location
             type: 'school',
             name: school.name,
             distance: school.distance,
@@ -1288,13 +1300,13 @@ function ExplorationView({ property, nearbyData, onBack }) {
       });
     }
     
-    // Add transit (up to 1)
+    // Add transit (up to 1) - USE ACTUAL COORDINATES
     if (nearbyData.transit && nearbyData.transit.length > 0) {
       const nearestTransit = nearbyData.transit[0];
-      if (nearestTransit.distance < 1) {
+      if (nearestTransit.distance < 1 && nearestTransit.lat && nearestTransit.lng) {
         waypoints.push({
-          lat: property.coords.lat + (Math.random() - 0.5) * 0.01,
-          lng: property.coords.lng + (Math.random() - 0.5) * 0.01,
+          lat: nearestTransit.lat,  // ✅ ACTUAL transit location
+          lng: nearestTransit.lng,  // ✅ ACTUAL transit location
           type: 'transit',
           name: nearestTransit.name,
           distance: nearestTransit.distance,
@@ -1303,13 +1315,13 @@ function ExplorationView({ property, nearbyData, onBack }) {
       }
     }
     
-    // Add amenities (up to 2)
+    // Add amenities (up to 2) - USE ACTUAL COORDINATES
     if (nearbyData.amenities && nearbyData.amenities.length > 0) {
       nearbyData.amenities.slice(0, 2).forEach(amenity => {
-        if (amenity.distance < 1) {
+        if (amenity.distance < 1 && amenity.lat && amenity.lng) {
           waypoints.push({
-            lat: property.coords.lat + (Math.random() - 0.5) * 0.01,
-            lng: property.coords.lng + (Math.random() - 0.5) * 0.01,
+            lat: amenity.lat,  // ✅ ACTUAL amenity location
+            lng: amenity.lng,  // ✅ ACTUAL amenity location
             type: amenity.type.toLowerCase(),
             name: amenity.name,
             distance: amenity.distance
@@ -2242,4 +2254,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-                }
+              }

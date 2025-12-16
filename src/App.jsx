@@ -115,6 +115,173 @@ const geocodeAddress = async (address) => {
   }
 };
 
+// NEW: Calculate distance between two points
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 3959; // Earth's radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return (R * c).toFixed(1);
+};
+
+// NEW: Calculate walk time
+const calculateWalkTime = (distanceMiles) => {
+  return Math.round((parseFloat(distanceMiles) / 3) * 60); // 3 mph walking speed
+};
+
+// NEW: Fetch dynamic nearby places from Google Places API
+const fetchNearbyPlaces = async (lat, lng) => {
+  const results = {
+    schools: [],
+    transit: [],
+    cafes: [],
+    amenities: []
+  };
+
+  try {
+    if (!window.google || !window.google.maps || !window.google.maps.places) {
+      console.warn('Google Places API not loaded yet');
+      return null; // Return null so we can use fallback
+    }
+
+    const service = new window.google.maps.places.PlacesService(document.createElement('div'));
+
+    // Helper to promisify nearbySearch
+    const searchNearby = (request) => {
+      return new Promise((resolve) => {
+        service.nearbySearch(request, (results, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+            resolve(results);
+          } else {
+            console.warn(`Places search failed: ${status}`);
+            resolve([]);
+          }
+        });
+      });
+    };
+
+    console.log('🔍 Fetching nearby places for:', lat, lng);
+
+    // Schools (radius: 3000m)
+    const schoolResults = await searchNearby({
+      location: new window.google.maps.LatLng(lat, lng),
+      radius: 3000,
+      type: 'school'
+    });
+    
+    results.schools = schoolResults.slice(0, 5).map(place => {
+      const distance = calculateDistance(lat, lng, place.geometry.location.lat(), place.geometry.location.lng());
+      return {
+        name: place.name,
+        distance: parseFloat(distance),
+        walkTime: calculateWalkTime(distance),
+        rating: place.rating ? Math.round(place.rating * 2) : 8,
+        type: place.types.includes('primary_school') ? 'Public Elementary' : 
+              place.types.includes('secondary_school') ? 'Public High School' : 'School'
+      };
+    });
+
+    // Transit (radius: 5000m)
+    const transitResults = await searchNearby({
+      location: new window.google.maps.LatLng(lat, lng),
+      radius: 5000,
+      type: 'transit_station'
+    });
+    
+    results.transit = transitResults.slice(0, 3).map(place => {
+      const distance = calculateDistance(lat, lng, place.geometry.location.lat(), place.geometry.location.lng());
+      return {
+        name: place.name,
+        distance: parseFloat(distance),
+        walkTime: calculateWalkTime(distance),
+        line: place.vicinity || 'Transit Station',
+        toPennStation: null // We don't have this data
+      };
+    });
+
+    // Cafes (radius: 2000m)
+    const cafeResults = await searchNearby({
+      location: new window.google.maps.LatLng(lat, lng),
+      radius: 2000,
+      type: 'cafe'
+    });
+    
+    results.cafes = cafeResults.slice(0, 3).map(place => {
+      const distance = calculateDistance(lat, lng, place.geometry.location.lat(), place.geometry.location.lng());
+      return {
+        name: place.name,
+        distance: parseFloat(distance),
+        walkTime: calculateWalkTime(distance)
+      };
+    });
+
+    // Grocery
+    const groceryResults = await searchNearby({
+      location: new window.google.maps.LatLng(lat, lng),
+      radius: 3000,
+      type: 'grocery_or_supermarket'
+    });
+    
+    if (groceryResults.length > 0) {
+      const grocery = groceryResults[0];
+      const distance = calculateDistance(lat, lng, grocery.geometry.location.lat(), grocery.geometry.location.lng());
+      results.amenities.push({
+        name: grocery.name,
+        distance: parseFloat(distance),
+        type: 'Grocery',
+        icon: 'shopping'
+      });
+    }
+
+    // Parks
+    const parkResults = await searchNearby({
+      location: new window.google.maps.LatLng(lat, lng),
+      radius: 3000,
+      type: 'park'
+    });
+    
+    if (parkResults.length > 0) {
+      const park = parkResults[0];
+      const distance = calculateDistance(lat, lng, park.geometry.location.lat(), park.geometry.location.lng());
+      results.amenities.push({
+        name: park.name,
+        distance: parseFloat(distance),
+        type: 'Park',
+        icon: 'park'
+      });
+    }
+
+    // Shopping
+    const shoppingResults = await searchNearby({
+      location: new window.google.maps.LatLng(lat, lng),
+      radius: 5000,
+      type: 'shopping_mall'
+    });
+    
+    if (shoppingResults.length > 0) {
+      const mall = shoppingResults[0];
+      const distance = calculateDistance(lat, lng, mall.geometry.location.lat(), mall.geometry.location.lng());
+      results.amenities.push({
+        name: mall.name,
+        distance: parseFloat(distance),
+        type: 'Shopping',
+        icon: 'shopping'
+      });
+    }
+
+    console.log('✅ Nearby places fetched:', results);
+    return results;
+
+  } catch (error) {
+    console.error('Error fetching nearby places:', error);
+    return null; // Return null so we can use fallback
+  }
+};
+
 // Real properties in Garden City, NY
 const SAMPLE_PROPERTIES = [
   {
@@ -253,6 +420,7 @@ const PROPERTY_CONSIDERATIONS = {
 export default function NeighborScope() {
   const [currentView, setCurrentView] = useState('search'); // Changed default to 'search'
   const [selectedProperty, setSelectedProperty] = useState(null);
+  const [nearbyData, setNearbyData] = useState(null); // NEW: Dynamic nearby data
   const [activeTab, setActiveTab] = useState('overview');
   const [userPreferences, setUserPreferences] = useState(null);
   const [workAddress, setWorkAddress] = useState('');
@@ -269,6 +437,7 @@ export default function NeighborScope() {
   const handleBack = () => {
     setCurrentView('search');
     setSelectedProperty(null);
+    setNearbyData(null); // Reset nearby data
   };
 
   const handleAddressSubmit = async (input) => {
@@ -309,6 +478,13 @@ export default function NeighborScope() {
       };
       
       console.log('✅ Property created:', customProperty);
+      
+      // NEW: Fetch nearby data
+      console.log('📍 Fetching nearby places...');
+      const places = await fetchNearbyPlaces(result.coords.lat, result.coords.lng);
+      console.log('✅ Nearby places:', places);
+      setNearbyData(places); // Will be null if fetching fails, which is fine
+      
       setSelectedProperty(customProperty);
       setCurrentView('exploration');
       
@@ -384,7 +560,8 @@ export default function NeighborScope() {
 
   return (
     <ExplorationView 
-      property={selectedProperty} 
+      property={selectedProperty}
+      nearbyData={nearbyData} // NEW: Pass dynamic data
       onBack={handleBack}
       activeTab={activeTab}
       setActiveTab={setActiveTab}
@@ -432,12 +609,6 @@ function SearchLandingPage({ onSubmit, onBrowseSamples, isLoading, error }) {
       onSubmit(input.trim());
     }
   };
-
-  const exampleAddresses = [
-    "100 Stewart Avenue, Garden City, NY 11530",
-    "45 Seventh Street, Garden City, NY 11530",
-    "220 Cathedral Avenue, Garden City, NY 11530"
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -525,22 +696,6 @@ function SearchLandingPage({ onSubmit, onBrowseSamples, isLoading, error }) {
                   {error}
                 </div>
               )}
-
-              <div className="text-sm text-slate-400">
-                <p className="font-medium mb-2 text-slate-300">Try these examples:</p>
-                <div className="space-y-2">
-                  {exampleAddresses.map((addr, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setInput(addr)}
-                      className="block text-purple-400 hover:text-purple-300 hover:underline text-left transition-colors"
-                    >
-                      {addr}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
 
             <div className="mt-8 pt-8 border-t border-white/10">
@@ -1102,7 +1257,7 @@ function FeatureCard({ icon, title, description }) {
   );
 }
 
-function ExplorationView({ property, onBack, activeTab, setActiveTab, userPreferences, onAddToCompare, isInComparison }) {
+function ExplorationView({ property, nearbyData, onBack, activeTab, setActiveTab, userPreferences, onAddToCompare, isInComparison }) {
   const [timeOfDay, setTimeOfDay] = useState('morning');
   const [showStreetView, setShowStreetView] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
@@ -1498,41 +1653,104 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
             </div>
 
             {/* Schools */}
-            <CategoryCard
-              title="Nearby Schools"
-              icon={<School size={20} />}
-              items={NEARBY_LOCATIONS.schools}
-              renderItem={(school) => (
-                <div>
-                  <div className="flex justify-between items-start mb-1">
-                    <div className="font-medium text-slate-900">{school.name}</div>
-                    <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">
-                      {school.rating}/10
+            {nearbyData && nearbyData.schools && nearbyData.schools.length > 0 ? (
+              <CategoryCard
+                title="Nearby Schools"
+                icon={<School size={20} />}
+                items={nearbyData.schools}
+                renderItem={(school) => (
+                  <div>
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="font-medium text-slate-900">{school.name}</div>
+                      <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">
+                        {school.rating}/10
+                      </div>
+                    </div>
+                    <div className="text-sm text-slate-600">{school.type}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {school.distance} mi • {school.walkTime} min walk
                     </div>
                   </div>
-                  <div className="text-sm text-slate-600">{school.type}</div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    {school.distance} mi • {school.walkTime} min walk
-                  </div>
+                )}
+              />
+            ) : property.id === 'custom' ? (
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <School size={20} />
+                  Nearby Schools
+                </h3>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                  <p className="text-amber-800 text-sm">
+                    Unable to load nearby schools for this location. This may be due to limited data availability in this area.
+                  </p>
                 </div>
-              )}
-            />
+              </div>
+            ) : (
+              <CategoryCard
+                title="Nearby Schools"
+                icon={<School size={20} />}
+                items={NEARBY_LOCATIONS.schools}
+                renderItem={(school) => (
+                  <div>
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="font-medium text-slate-900">{school.name}</div>
+                      <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">
+                        {school.rating}/10
+                      </div>
+                    </div>
+                    <div className="text-sm text-slate-600">{school.type}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {school.distance} mi • {school.walkTime} min walk
+                    </div>
+                  </div>
+                )}
+              />
+            )}
 
             {/* Transit */}
-            <CategoryCard
-              title="Public Transit"
-              icon={<Train size={20} />}
-              items={NEARBY_LOCATIONS.transit}
-              renderItem={(station) => (
-                <div>
-                  <div className="font-medium text-slate-900">{station.name}</div>
-                  <div className="text-sm text-slate-600">{station.line}</div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    {station.distance} mi • {station.walkTime} min walk • {station.toPennStation} min to Penn Station
+            {nearbyData && nearbyData.transit && nearbyData.transit.length > 0 ? (
+              <CategoryCard
+                title="Public Transit"
+                icon={<Train size={20} />}
+                items={nearbyData.transit}
+                renderItem={(station) => (
+                  <div>
+                    <div className="font-medium text-slate-900">{station.name}</div>
+                    <div className="text-sm text-slate-600">{station.line}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {station.distance} mi • {station.walkTime} min walk{station.toPennStation && ` • ${station.toPennStation} min to Penn Station`}
+                    </div>
                   </div>
+                )}
+              />
+            ) : property.id === 'custom' ? (
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <Train size={20} />
+                  Public Transit
+                </h3>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                  <p className="text-amber-800 text-sm">
+                    Unable to load transit information for this location. This may be due to limited data availability in this area.
+                  </p>
                 </div>
-              )}
-            />
+              </div>
+            ) : (
+              <CategoryCard
+                title="Public Transit"
+                icon={<Train size={20} />}
+                items={NEARBY_LOCATIONS.transit}
+                renderItem={(station) => (
+                  <div>
+                    <div className="font-medium text-slate-900">{station.name}</div>
+                    <div className="text-sm text-slate-600">{station.line}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {station.distance} mi • {station.walkTime} min walk • {station.toPennStation} min to Penn Station
+                    </div>
+                  </div>
+                )}
+              />
+            )}
 
             {/* Concerns */}
             {PROPERTY_CONCERNS[property.id] && PROPERTY_CONCERNS[property.id].length > 0 ? (
@@ -1574,18 +1792,45 @@ function ExplorationView({ property, onBack, activeTab, setActiveTab, userPrefer
             )}
 
             {/* Amenities */}
-            <CategoryCard
-              title="Amenities"
-              icon={<ShoppingBag size={20} />}
-              items={NEARBY_LOCATIONS.amenities}
-              renderItem={(amenity) => (
-                <div>
-                  <div className="font-medium text-slate-900">{amenity.name}</div>
-                  <div className="text-sm text-slate-600">{amenity.type}</div>
-                  <div className="text-xs text-slate-500 mt-1">{amenity.distance} mi</div>
+            {nearbyData && nearbyData.amenities && nearbyData.amenities.length > 0 ? (
+              <CategoryCard
+                title="Amenities"
+                icon={<ShoppingBag size={20} />}
+                items={nearbyData.amenities}
+                renderItem={(amenity) => (
+                  <div>
+                    <div className="font-medium text-slate-900">{amenity.name}</div>
+                    <div className="text-sm text-slate-600">{amenity.type}</div>
+                    <div className="text-xs text-slate-500 mt-1">{amenity.distance} mi</div>
+                  </div>
+                )}
+              />
+            ) : property.id === 'custom' ? (
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <ShoppingBag size={20} />
+                  Amenities
+                </h3>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                  <p className="text-amber-800 text-sm">
+                    Unable to load amenity information for this location. This may be due to limited data availability in this area.
+                  </p>
                 </div>
-              )}
-            />
+              </div>
+            ) : (
+              <CategoryCard
+                title="Amenities"
+                icon={<ShoppingBag size={20} />}
+                items={NEARBY_LOCATIONS.amenities}
+                renderItem={(amenity) => (
+                  <div>
+                    <div className="font-medium text-slate-900">{amenity.name}</div>
+                    <div className="text-sm text-slate-600">{amenity.type}</div>
+                    <div className="text-xs text-slate-500 mt-1">{amenity.distance} mi</div>
+                  </div>
+                )}
+              />
+            )}
           </div>
         </div>
       </div>

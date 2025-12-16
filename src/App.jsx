@@ -1628,7 +1628,7 @@ function ExplorationView({ property, nearbyData, onBack }) {
                 <>
                   <div 
                     ref={streetViewRef}
-                    className="w-full h-[450px] bg-slate-200 relative"
+                    className="w-full h-[450px] bg-slate-200 relative overflow-visible"
                   >
                     {!mapLoaded && (
                       <div className="w-full h-full flex items-center justify-center">
@@ -1638,83 +1638,83 @@ function ExplorationView({ property, nearbyData, onBack }) {
                         </div>
                       </div>
                     )}
-                  </div>
-                  
-                  {/* Smart Tour Overlay */}
-                  {isTourActive && currentPOI && (
-                    <div className="absolute top-4 left-4 right-4 bg-white rounded-xl shadow-2xl border-4 border-purple-500 p-5 z-10">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            {currentPOI.type === 'start' ? (
-                              <MapPin size={28} className="text-purple-600" />
-                            ) : (
-                              <Navigation size={28} className="text-blue-500" />
-                            )}
-                            <div>
-                              <h4 className="font-bold text-slate-900 text-xl">{currentPOI.name}</h4>
-                              <p className="text-sm text-slate-600 mt-1">{currentPOI.direction}</p>
+                    
+                    {/* Smart Tour Overlay - INSIDE Street View container */}
+                    {isTourActive && currentPOI && (
+                      <div className="absolute top-4 left-4 right-4 bg-white rounded-xl shadow-2xl border-4 border-purple-500 p-5 z-[100]">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              {currentPOI.type === 'start' ? (
+                                <MapPin size={28} className="text-purple-600" />
+                              ) : (
+                                <Navigation size={28} className="text-blue-500" />
+                              )}
+                              <div>
+                                <h4 className="font-bold text-slate-900 text-xl">{currentPOI.name}</h4>
+                                <p className="text-sm text-slate-600 mt-1">{currentPOI.direction}</p>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                      
-                      {/* Progress Bar */}
-                      <div className="mb-3">
-                        <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div 
-                            className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-500"
-                            style={{ width: `${tourProgress}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1 text-center">{tourProgress}% complete</p>
-                      </div>
-
-                      {/* Tour Controls */}
-                      <div className="flex items-center gap-2">
-                        {!tourPaused ? (
-                          <button
-                            onClick={pauseTour}
-                            className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                          >
-                            <span>⏸</span> Pause
-                          </button>
-                        ) : (
-                          <button
-                            onClick={resumeTour}
-                            className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                          >
-                            <span>▶️</span> Resume
-                          </button>
-                        )}
-                        <button
-                          onClick={stopTour}
-                          className="flex-1 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                        >
-                          <span>⏹</span> Stop
-                        </button>
                         
-                        {/* Speed Control */}
-                        <div className="flex gap-1">
-                          {['slow', 'normal', 'fast'].map(speed => (
+                        {/* Progress Bar */}
+                        <div className="mb-3">
+                          <div className="w-full bg-slate-200 rounded-full h-2">
+                            <div 
+                              className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-500"
+                              style={{ width: `${tourProgress}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1 text-center">{tourProgress}% complete</p>
+                        </div>
+
+                        {/* Tour Controls */}
+                        <div className="flex items-center gap-2">
+                          {!tourPaused ? (
                             <button
-                              key={speed}
-                              onClick={() => setTourSpeed(speed)}
-                              className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                                tourSpeed === speed
-                                  ? 'bg-purple-600 text-white'
-                                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                              }`}
+                              onClick={pauseTour}
+                              className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                             >
-                              {speed === 'slow' && '🐌'}
-                              {speed === 'normal' && '⚡'}
-                              {speed === 'fast' && '🚀'}
+                              <span>⏸</span> Pause
                             </button>
-                          ))}
+                          ) : (
+                            <button
+                              onClick={resumeTour}
+                              className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                              <span>▶️</span> Resume
+                            </button>
+                          )}
+                          <button
+                            onClick={stopTour}
+                            className="flex-1 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                          >
+                            <span>⏹</span> Stop
+                          </button>
+                          
+                          {/* Speed Control */}
+                          <div className="flex gap-1">
+                            {['slow', 'normal', 'fast'].map(speed => (
+                              <button
+                                key={speed}
+                                onClick={() => setTourSpeed(speed)}
+                                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                                  tourSpeed === speed
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                }`}
+                              >
+                                {speed === 'slow' && '🐌'}
+                                {speed === 'normal' && '⚡'}
+                                {speed === 'fast' && '🚀'}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   
                   {/* Back to Map + Smart Tour Button */}
                   <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-2">
@@ -2244,4 +2244,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-}
+                }

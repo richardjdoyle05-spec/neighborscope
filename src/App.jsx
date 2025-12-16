@@ -286,33 +286,33 @@ const fetchNearbyPlaces = async (lat, lng) => {
 const SAMPLE_PROPERTIES = [
   {
     id: 1,
-    address: "100 Stewart Avenue, Garden City, NY 11530",
-    coords: { lat: 40.7265, lng: -73.6345 },
-    price: "$1,250,000",
-    beds: 4,
-    baths: 2.5,
+    address: "350 Fifth Avenue, New York, NY 10118",
+    coords: { lat: 40.7484, lng: -73.9857 },
+    price: "$2,850,000",
+    beds: 2,
+    baths: 2,
     lifestyleMatch: 92,
     commuteTime: 47,
     dealBreakers: 1
   },
   {
     id: 2,
-    address: "45 Seventh Street, Garden City, NY 11530",
-    coords: { lat: 40.7289, lng: -73.6389 },
-    price: "$985,000",
+    address: "1910 Ocean Way, Santa Monica, CA 90405",
+    coords: { lat: 34.0195, lng: -118.4912 },
+    price: "$3,200,000",
     beds: 3,
-    baths: 2,
+    baths: 2.5,
     lifestyleMatch: 85,
     commuteTime: 51,
     dealBreakers: 0
   },
   {
     id: 3,
-    address: "220 Cathedral Avenue, Garden City, NY 11530",
-    coords: { lat: 40.7298, lng: -73.6412 },
-    price: "$1,450,000",
-    beds: 5,
-    baths: 3,
+    address: "875 North Michigan Avenue, Chicago, IL 60611",
+    coords: { lat: 41.8986, lng: -87.6233 },
+    price: "$1,850,000",
+    beds: 3,
+    baths: 2,
     lifestyleMatch: 88,
     commuteTime: 44,
     dealBreakers: 2
@@ -590,18 +590,18 @@ function SearchLandingPage({ onSubmit, onPropertySelect, isLoading, error }) {
           {/* Hero Section */}
           <div className="text-center mb-12">
             <h1 className="playfair text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              Explore Any Home's
+              Stop the
               <span className="block mt-2">
                 <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  Neighborhood
+                  Reconnaissance Missions
                 </span>
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-slate-300 mb-3">
-              Before You Drive There
+            <p className="text-xl md:text-2xl text-slate-300 mb-3 leading-relaxed">
+              Explore any home's neighborhood via Street View before you drive there.
             </p>
-            <p className="text-lg text-slate-400">
-              Paste any Zillow, Redfin, or Realtor.com link
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              Smart Tour auto-walks you around the neighborhood showing schools, transit, cafes, and parks.
             </p>
           </div>
 
@@ -621,7 +621,7 @@ function SearchLandingPage({ onSubmit, onPropertySelect, isLoading, error }) {
                           handleSubmit();
                         }
                       }}
-                      placeholder="Paste property URL or enter address..."
+                      placeholder="Paste any Zillow/Redfin link or enter an address..."
                       className="w-full px-6 py-5 bg-slate-800/50 border-2 border-slate-600 rounded-xl text-white placeholder-slate-400 text-lg focus:border-purple-500 focus:outline-none transition-all"
                       disabled={isLoading}
                     />
@@ -1223,7 +1223,6 @@ function FeatureCard({ icon, title, description }) {
 }
 
 function ExplorationView({ property, nearbyData, onBack }) {
-  const [timeOfDay, setTimeOfDay] = useState('morning');
   const [showStreetView, setShowStreetView] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -1455,131 +1454,6 @@ function ExplorationView({ property, nearbyData, onBack }) {
               )}
             </div>
 
-            {/* AI Insights */}
-            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-200">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="bg-purple-500 rounded-lg p-2">
-                  <Zap className="text-white" size={20} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-slate-900 text-lg">Location Intelligence</h3>
-                  <p className="text-slate-600 text-sm">Data-driven insights based on location</p>
-                </div>
-              </div>
-
-              <p className="text-slate-700 leading-relaxed mb-4">{LOCATION_INSIGHTS.summary}</p>
-
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                <ScoreCard label="Walkability" score={LOCATION_INSIGHTS.walkability} />
-                <ScoreCard label="Transit" score={LOCATION_INSIGHTS.transitScore} />
-                <ScoreCard label="Schools" score={LOCATION_INSIGHTS.schoolQuality} />
-                <div className="bg-white rounded-lg p-3 text-center">
-                  <div className="text-sm text-slate-600 mb-1">Noise</div>
-                  <div className="text-green-600 font-bold">{LOCATION_INSIGHTS.noise}</div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                    <span className="text-green-500">✓</span> Key Highlights
-                  </h4>
-                  <ul className="space-y-1">
-                    {LOCATION_INSIGHTS.highlights.map((highlight, idx) => (
-                      <li key={idx} className="text-slate-700 text-sm pl-4">• {highlight}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                    <AlertTriangle size={16} className="text-amber-500" /> Considerations
-                  </h4>
-                  <ul className="space-y-1">
-                    {PROPERTY_CONSIDERATIONS[property.id]?.map((consideration, idx) => (
-                      <li key={idx} className="text-slate-700 text-sm pl-4">• {consideration}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Time of Day Insights - NEW COMPETITIVE FEATURE */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                  <Clock size={20} className="text-blue-500" />
-                  Neighborhood by Time of Day
-                </h3>
-              </div>
-              <p className="text-slate-600 text-sm mb-4">See what this location is like at different times</p>
-              
-              <div className="flex gap-2 mb-6">
-                {[
-                  { id: 'morning', label: 'Morning', icon: <Sun size={16} /> },
-                  { id: 'afternoon', label: 'Afternoon', icon: <Sun size={16} /> },
-                  { id: 'evening', label: 'Evening', icon: <Moon size={16} /> },
-                  { id: 'night', label: 'Night', icon: <Moon size={16} /> }
-                ].map(time => (
-                  <button
-                    key={time.id}
-                    onClick={() => setTimeOfDay(time.id)}
-                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                      timeOfDay === time.id
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    {time.icon}
-                    {time.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-3 bg-blue-50 rounded-lg p-4">
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-1 text-sm">Traffic</h4>
-                  <p className="text-slate-700 text-sm">{TIME_OF_DAY_INSIGHTS[timeOfDay].traffic}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-1 text-sm">Noise Level</h4>
-                  <p className="text-slate-700 text-sm">{TIME_OF_DAY_INSIGHTS[timeOfDay].noise}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-1 text-sm">Activity</h4>
-                  <p className="text-slate-700 text-sm">{TIME_OF_DAY_INSIGHTS[timeOfDay].activity}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Future Developments - NEW COMPETITIVE FEATURE */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <TrendingUp size={20} className="text-orange-500" />
-                Upcoming Developments
-              </h3>
-              <p className="text-slate-600 text-sm mb-4">Construction permits and zoning changes in this area</p>
-              
-              <div className="space-y-4">
-                {FUTURE_DEVELOPMENTS.map((dev, idx) => (
-                  <div key={idx} className="border border-slate-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="font-medium text-slate-900">{dev.type}</div>
-                      <div className={`px-2 py-1 rounded text-xs font-bold ${
-                        dev.impact === 'positive' ? 'bg-green-100 text-green-800' :
-                        dev.impact === 'negative' ? 'bg-red-100 text-red-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {dev.status}
-                      </div>
-                    </div>
-                    <div className="text-sm text-slate-600 mb-2">{dev.location}</div>
-                    <div className="text-sm text-slate-700">{dev.description}</div>
-                    <div className="text-xs text-slate-500 mt-2">{dev.distance} mi away</div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Sidebar */}
@@ -2082,4 +1956,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-            }
+}

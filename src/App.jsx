@@ -1628,24 +1628,7 @@ function ExplorationView({ property, nearbyData, onBack }) {
               )}
             </div>
 
-            {/* Map View - Always visible now */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-              <div 
-                ref={mapRef}
-                className="w-full h-[300px] bg-slate-200"
-              >
-                {!mapLoaded && (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                      <p className="text-slate-600">Loading map...</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Street View - Always visible */}
+            {/* Street View - RIGHT UNDER Smart Tour button */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
               <div 
                 ref={streetViewRef}
@@ -1721,6 +1704,23 @@ function ExplorationView({ property, nearbyData, onBack }) {
                           <option value="fast">🚀</option>
                         </select>
                       </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Map View - Below Street View */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div 
+                ref={mapRef}
+                className="w-full h-[300px] bg-slate-200"
+              >
+                {!mapLoaded && (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                      <p className="text-slate-600">Loading map...</p>
                     </div>
                   </div>
                 )}

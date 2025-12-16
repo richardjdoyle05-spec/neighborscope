@@ -1761,8 +1761,6 @@ function ExplorationView({ property, nearbyData, onBack }) {
                 </div>
               </div>
             )}
-            </div>
-
           </div>
 
           {/* Sidebar */}
@@ -2265,4 +2263,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-                }
+      }

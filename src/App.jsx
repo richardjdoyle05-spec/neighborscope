@@ -1276,44 +1276,36 @@ function ExplorationView({ property, nearbyData, onBack }) {
   };
 
   // Smart Tour: Calculate waypoints from property to POIs and back
-  // Smart Tour: Create circular route around the block/neighborhood
-  // IMPROVED: Bigger loop (3 blocks) with more waypoints (18 total) for better views
+  // Smart Tour: Create circular route around the IMMEDIATE block
+  // FOCUSED: Just 1 block around property with strategic waypoints
   const calculateTourWaypoints = () => {
     const waypoints = [];
     const startLat = property.coords.lat;
     const startLng = property.coords.lng;
     
-    // Distance to walk - INCREASED to 3 blocks for better neighborhood coverage
-    // 0.003 degrees ≈ 0.21 miles ≈ 3-4 blocks
-    const blockDistance = 0.003;
+    // Distance to walk - REDUCED to 1 block (realistic for house hunters)
+    // 0.001 degrees ≈ 0.07 miles ≈ 1 city block
+    const blockDistance = 0.001;
     
-    console.log('🗺️ Creating IMPROVED Smart Tour route (3 blocks, 18 waypoints)...');
+    console.log('🗺️ Creating Smart Tour: 1-block focused route...');
     console.log('Starting point:', property.address);
     
-    // Create a larger square/rectangle tour around the property with MORE waypoints
+    // Simple 1-block square with strategic waypoints (skip corners to avoid bad angles)
     const route = [
       // Start
-      { lat: startLat, lng: startLng, name: 'Starting at Property', direction: 'Beginning neighborhood tour' },
+      { lat: startLat, lng: startLng, name: 'Starting Point', direction: 'Starting at the property' },
       
-      // Walk North (3 stops)
-      { lat: startLat + blockDistance, lng: startLng, name: 'Walking North', direction: 'Heading north, first block' },
-      { lat: startLat + (blockDistance * 2), lng: startLng, name: 'North Side', direction: 'Two blocks north' },
-      { lat: startLat + (blockDistance * 3), lng: startLng, name: 'Far North End', direction: 'Three blocks north of property' },
+      // North side (mid-block for best view)
+      { lat: startLat + blockDistance, lng: startLng, name: 'North Side', direction: 'Walking north along the street' },
       
-      // Turn right, walk East (3 stops)
-      { lat: startLat + (blockDistance * 3), lng: startLng + blockDistance, name: 'Northeast Direction', direction: 'Turning east along the street' },
-      { lat: startLat + (blockDistance * 3), lng: startLng + (blockDistance * 2), name: 'Northeast Area', direction: 'Continuing east' },
-      { lat: startLat + (blockDistance * 3), lng: startLng + (blockDistance * 3), name: 'Northeast Corner', direction: 'Far northeast corner' },
+      // East side (mid-block)
+      { lat: startLat + blockDistance, lng: startLng + blockDistance, name: 'East Side', direction: 'East side of the block' },
       
-      // Turn right, walk South (3 stops)
-      { lat: startLat + (blockDistance * 2), lng: startLng + (blockDistance * 3), name: 'Southeast Direction', direction: 'Heading south along east side' },
-      { lat: startLat + blockDistance, lng: startLng + (blockDistance * 3), name: 'Southeast Area', direction: 'Continuing south' },
-      { lat: startLat, lng: startLng + (blockDistance * 3), name: 'Southeast Corner', direction: 'Southeast corner of loop' },
+      // South side (mid-block)
+      { lat: startLat, lng: startLng + blockDistance, name: 'South Side', direction: 'South side of the block' },
       
-      // Turn right, walk West (3 stops)
-      { lat: startLat, lng: startLng + (blockDistance * 2), name: 'Southwest Direction', direction: 'Heading west to return' },
-      { lat: startLat, lng: startLng + blockDistance, name: 'Southwest Area', direction: 'Almost back to start' },
-      { lat: startLat, lng: startLng, name: 'Tour Complete!', direction: 'Completed full neighborhood tour' }
+      // Complete the loop
+      { lat: startLat, lng: startLng, name: 'Tour Complete', direction: 'Back at the property' }
     ];
     
     route.forEach((point, idx) => {
@@ -1327,7 +1319,7 @@ function ExplorationView({ property, nearbyData, onBack }) {
       console.log(`  ${idx === 0 ? '📍' : idx === route.length - 1 ? '🏁' : '🚶'} ${point.name}`);
     });
     
-    console.log(`✅ Improved Smart Tour ready: ${waypoints.length} waypoints covering 3 blocks!`);
+    console.log(`✅ Focused 1-block Smart Tour: ${waypoints.length} waypoints`);
     return waypoints;
   };
 
@@ -1403,13 +1395,13 @@ function ExplorationView({ property, nearbyData, onBack }) {
     });
 
     // Determine delay based on speed
-    // Adjusted for longer tour (13 waypoints) to keep around 60 seconds
+    // Adjusted for 1-block tour (5 waypoints) to keep around 30 seconds
     const delays = {
-      slow: 6000,   // 6 seconds per stop = 78 seconds total
-      normal: 4500, // 4.5 seconds per stop = 58.5 seconds total
-      fast: 3000    // 3 seconds per stop = 39 seconds total
+      slow: 8000,   // 8 seconds per stop = 40 seconds total
+      normal: 6000, // 6 seconds per stop = 30 seconds total
+      fast: 4000    // 4 seconds per stop = 20 seconds total
     };
-    const delay = delays[tourSpeed] || 4500;
+    const delay = delays[tourSpeed] || 6000;
 
     // Schedule next step
     tourIntervalRef.current = setTimeout(() => {
@@ -1605,18 +1597,15 @@ function ExplorationView({ property, nearbyData, onBack }) {
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-lg border-2 border-purple-200 p-6">
               <div className="text-center mb-4">
                 <h3 className="text-2xl font-bold text-slate-900 mb-2">🚶 Take a Smart Tour</h3>
-                <p className="text-slate-600">Auto-walk around the neighborhood in 60 seconds</p>
+                <p className="text-slate-600">Auto-walk around the immediate block in 30 seconds</p>
               </div>
               
               {!isTourActive ? (
                 <button 
                   onClick={() => {
                     if (!mapLoaded || !streetViewInstanceRef.current) {
-                      // If Street View not ready, just enable it and wait
-                      setShowStreetView(true);
                       alert('Loading Street View... Click "START SMART TOUR" again in a moment!');
                     } else {
-                      // Street View is ready, start tour immediately
                       startTour();
                     }
                   }}
@@ -1639,18 +1628,34 @@ function ExplorationView({ property, nearbyData, onBack }) {
               )}
             </div>
 
-            {/* Street View (always visible now) */}
+            {/* Map View - Always visible now */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div 
+                ref={mapRef}
+                className="w-full h-[300px] bg-slate-200"
+              >
+                {!mapLoaded && (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                      <p className="text-slate-600">Loading map...</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Street View - Always visible */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
               <div 
                 ref={streetViewRef}
-                className="w-full h-[500px] bg-slate-200 relative overflow-visible"
+                className="w-full h-[400px] bg-slate-200 relative overflow-visible"
               >
                 {!mapLoaded && (
                   <div className="w-full h-full flex items-center justify-center">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
                       <p className="text-slate-600">Loading Street View...</p>
-                      <p className="text-slate-500 text-sm mt-2">Preparing your neighborhood tour...</p>
                     </div>
                   </div>
                 )}
@@ -1720,47 +1725,7 @@ function ExplorationView({ property, nearbyData, onBack }) {
                   </div>
                 )}
               </div>
-              
-              {/* View Map button (secondary) */}
-              <div className="p-4 bg-slate-50 border-t border-slate-200">
-                <button 
-                  onClick={() => setShowStreetView(false)}
-                  className="w-full py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium flex items-center justify-center gap-2 text-sm"
-                >
-                  <MapPin size={16} />
-                  View Map
-                </button>
-              </div>
             </div>
-
-            {/* Map View (now hidden by default, accessible via button) */}
-            {!showStreetView && (
-              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                <div 
-                  ref={mapRef}
-                  className="w-full h-[450px] bg-slate-200"
-                >
-                  {!mapLoaded && (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                        <p className="text-slate-600">Loading map...</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="p-4 bg-slate-50 border-t border-slate-200">
-                  <button 
-                    onClick={() => setShowStreetView(true)}
-                    className="w-full py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors font-medium flex items-center justify-center gap-2"
-                  >
-                    <ExternalLink size={18} />
-                    Back to Street View
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Sidebar */}
@@ -2263,4 +2228,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-      }
+}

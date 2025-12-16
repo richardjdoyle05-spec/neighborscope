@@ -29,7 +29,7 @@ const NeighborScopeLogo = ({ size = 'md', theme = 'dark', className = '' }) => {
         </div>
       </div>
       <span className={`playfair font-bold ${colors.text} ${text}`}>
-        Neighbor<span className={colors.primary}>Scope</span>
+        Neighborhood<span className={colors.primary}>Scope</span>
       </span>
     </div>
   );
@@ -417,27 +417,32 @@ const PROPERTY_CONSIDERATIONS = {
   3: ["Power lines along Stewart Avenue (0.2 mi away)", "Moderate traffic on Franklin Avenue (0.1 mi away)"]
 };
 
-export default function NeighborScope() {
-  const [currentView, setCurrentView] = useState('search'); // Changed default to 'search'
+export default function NeighborhoodScope() {
+  const [currentView, setCurrentView] = useState('search');
   const [selectedProperty, setSelectedProperty] = useState(null);
-  const [nearbyData, setNearbyData] = useState(null); // NEW: Dynamic nearby data
-  const [activeTab, setActiveTab] = useState('overview');
-  const [userPreferences, setUserPreferences] = useState(null);
-  const [workAddress, setWorkAddress] = useState('');
-  const [comparisonList, setComparisonList] = useState([]);
-  const [showMatcher, setShowMatcher] = useState(false);
+  const [nearbyData, setNearbyData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchError, setSearchError] = useState(null);
 
-  const handlePropertySelect = (property) => {
+  const handlePropertySelect = async (property) => {
+    setIsLoading(true);
     setSelectedProperty(property);
+    
+    // Fetch nearby data for the property
+    if (property.id !== 'custom') {
+      // For sample properties, fetch their nearby data too
+      const places = await fetchNearbyPlaces(property.coords.lat, property.coords.lng);
+      setNearbyData(places);
+    }
+    
     setCurrentView('exploration');
+    setIsLoading(false);
   };
 
   const handleBack = () => {
     setCurrentView('search');
     setSelectedProperty(null);
-    setNearbyData(null); // Reset nearby data
+    setNearbyData(null);
   };
 
   const handleAddressSubmit = async (input) => {
@@ -502,58 +507,14 @@ export default function NeighborScope() {
     setIsLoading(false);
   };
 
-  const handleBrowseSamples = () => {
-    setCurrentView('landing');
-  };
-
-  const addToComparison = (property) => {
-    if (comparisonList.find(p => p.id === property.id)) {
-      setComparisonList(comparisonList.filter(p => p.id !== property.id));
-    } else if (comparisonList.length < 3) {
-      setComparisonList([...comparisonList, property]);
-    }
-  };
-
-  const handlePreferencesSubmit = (prefs) => {
-    setUserPreferences(prefs);
-    setShowMatcher(false);
-  };
-
-  if (showMatcher) {
-    return <LifestyleMatcher onSubmit={handlePreferencesSubmit} onSkip={() => setShowMatcher(false)} />;
-  }
-
-  // New Search Landing Page
+  // Simple two-view app: search or exploration
   if (currentView === 'search') {
     return (
       <SearchLandingPage 
         onSubmit={handleAddressSubmit}
-        onBrowseSamples={handleBrowseSamples}
+        onPropertySelect={handlePropertySelect}
         isLoading={isLoading}
         error={searchError}
-      />
-    );
-  }
-
-  if (currentView === 'landing') {
-    return (
-      <LandingPage 
-        onPropertySelect={handlePropertySelect} 
-        onShowMatcher={() => setShowMatcher(true)}
-        onBack={() => setCurrentView('search')}
-        userPreferences={userPreferences}
-        comparisonList={comparisonList}
-        onCompare={addToComparison}
-      />
-    );
-  }
-
-  if (currentView === 'comparison' && comparisonList.length > 0) {
-    return (
-      <ComparisonView 
-        properties={comparisonList}
-        onBack={handleBack}
-        onRemove={(id) => setComparisonList(comparisonList.filter(p => p.id !== id))}
       />
     );
   }
@@ -561,19 +522,14 @@ export default function NeighborScope() {
   return (
     <ExplorationView 
       property={selectedProperty}
-      nearbyData={nearbyData} // NEW: Pass dynamic data
+      nearbyData={nearbyData}
       onBack={handleBack}
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      userPreferences={userPreferences}
-      onAddToCompare={() => addToComparison(selectedProperty)}
-      isInComparison={comparisonList.find(p => p.id === selectedProperty.id)}
     />
   );
 }
 
-// New Search Landing Page Component
-function SearchLandingPage({ onSubmit, onBrowseSamples, isLoading, error }) {
+// Search Landing Page with Sample Properties
+function SearchLandingPage({ onSubmit, onPropertySelect, isLoading, error }) {
   const [input, setInput] = useState('');
   const inputRef = useRef(null);
   const autocompleteRef = useRef(null);
@@ -698,14 +654,23 @@ function SearchLandingPage({ onSubmit, onBrowseSamples, isLoading, error }) {
               )}
             </div>
 
+            {/* Sample Properties */}
             <div className="mt-8 pt-8 border-t border-white/10">
-              <button
-                onClick={onBrowseSamples}
-                className="w-full py-4 text-slate-300 hover:text-white font-medium flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all"
-              >
-                <span>Or browse sample properties</span>
-                <ArrowRight size={18} />
-              </button>
+              <h3 className="text-center text-slate-300 font-semibold mb-6 text-lg">Try a sample property:</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {SAMPLE_PROPERTIES.map((property) => (
+                  <button
+                    key={property.id}
+                    onClick={() => onPropertySelect(property)}
+                    disabled={isLoading}
+                    className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 rounded-xl p-4 text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="text-white font-semibold mb-1">{property.price}</div>
+                    <div className="text-sm text-slate-400 mb-2">{property.beds} beds • {property.baths} baths</div>
+                    <div className="text-xs text-slate-500 line-clamp-2">{property.address}</div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -715,22 +680,22 @@ function SearchLandingPage({ onSubmit, onBrowseSamples, isLoading, error }) {
               <div className="w-14 h-14 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Eye size={28} className="text-purple-400" />
               </div>
-              <h3 className="font-semibold text-white mb-2 text-lg">360° Street View</h3>
-              <p className="text-sm text-slate-400">Walk every street virtually before visiting</p>
+              <h3 className="font-semibold text-white mb-2 text-lg">Smart Tour</h3>
+              <p className="text-sm text-slate-400">Auto-walk around the neighborhood showing schools, transit, cafes</p>
             </div>
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 transition-all">
               <div className="w-14 h-14 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock size={28} className="text-purple-400" />
+                <MapPin size={28} className="text-purple-400" />
               </div>
-              <h3 className="font-semibold text-white mb-2 text-lg">Time-of-Day Insights</h3>
-              <p className="text-sm text-slate-400">See what morning vs evening feels like</p>
+              <h3 className="font-semibold text-white mb-2 text-lg">Any US Address</h3>
+              <p className="text-sm text-slate-400">Works for every address in the United States</p>
             </div>
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 transition-all">
               <div className="w-14 h-14 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <School size={28} className="text-purple-400" />
               </div>
-              <h3 className="font-semibold text-white mb-2 text-lg">Nearby Everything</h3>
-              <p className="text-sm text-slate-400">Schools, transit, cafes with exact distances</p>
+              <h3 className="font-semibold text-white mb-2 text-lg">Real Data</h3>
+              <p className="text-sm text-slate-400">Actual schools, transit stations, and amenities with accurate distances</p>
             </div>
           </div>
         </div>
@@ -1257,7 +1222,7 @@ function FeatureCard({ icon, title, description }) {
   );
 }
 
-function ExplorationView({ property, nearbyData, onBack, activeTab, setActiveTab, userPreferences, onAddToCompare, isInComparison }) {
+function ExplorationView({ property, nearbyData, onBack }) {
   const [timeOfDay, setTimeOfDay] = useState('morning');
   const [showStreetView, setShowStreetView] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
@@ -1417,17 +1382,6 @@ function ExplorationView({ property, nearbyData, onBack, activeTab, setActiveTab
                 <Calendar size={16} />
                 Schedule Viewing
               </button>
-              <button
-                onClick={onAddToCompare}
-                className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                  isInComparison
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                }`}
-              >
-                <Heart size={16} />
-                {isInComparison ? 'Added' : 'Compare'}
-              </button>
               <div className="ml-2">
                 <NeighborScopeLogo size="sm" theme="light" />
               </div>
@@ -1509,13 +1463,8 @@ function ExplorationView({ property, nearbyData, onBack, activeTab, setActiveTab
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-slate-900 text-lg">Location Intelligence</h3>
-                  <p className="text-slate-600 text-sm">AI-generated insights based on location data</p>
+                  <p className="text-slate-600 text-sm">Data-driven insights based on location</p>
                 </div>
-                {userPreferences && (
-                  <div className="match-badge text-white px-3 py-1 rounded-full text-sm font-bold">
-                    {property.lifestyleMatch}% Match
-                  </div>
-                )}
               </div>
 
               <p className="text-slate-700 leading-relaxed mb-4">{LOCATION_INSIGHTS.summary}</p>
@@ -1646,9 +1595,6 @@ function ExplorationView({ property, nearbyData, onBack, activeTab, setActiveTab
                 <StatRow label="Nearest Transit" value="0.6 mi (12 min walk)" />
                 <StatRow label="Nearest Cafe" value="0.3 mi (6 min walk)" />
                 <StatRow label="Grocery Store" value="0.8 mi" />
-                {userPreferences?.workLocation && (
-                  <StatRow label="Commute Time" value={`${property.commuteTime} min`} />
-                )}
               </div>
             </div>
 
@@ -2136,4 +2082,4 @@ function ComparisonMetric({ label, value, bar, inverted = false }) {
       </div>
     </div>
   );
-                }
+            }

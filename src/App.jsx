@@ -1,16 +1,17 @@
-}import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Train, School, Coffee, AlertTriangle, Clock, Navigation, Zap, ShoppingBag, TreePine, Info, Heart, X, Check, TrendingUp, Building, Users, Moon, Sun, ExternalLink, Calendar, Search, ArrowRight, Eye } from 'lucide-react';
 
-// IMPORTANT: Add your Google Maps API key here
-const GOOGLE_MAPS_API_KEY = 'AIzaSyBxU6OMCZvkLLbcjo4bXoyQOHg02VZ8gok'; // Replace with your actual API key
-// Google Analytics
-const GA_MEASUREMENT_ID = 'G-KMQ4KM49XM';
+// Google Analytics - Replace with your actual measurement ID
+const GA_MEASUREMENT_ID = 'G-KMQ4KM49XM'; // Your Google Analytics ID
+
+// Initialize Google Analytics
 const initGA = () => {
   if (typeof window !== 'undefined' && !window.gtag) {
     const script1 = document.createElement('script');
     script1.async = true;
     script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
     document.head.appendChild(script1);
+
     window.dataLayer = window.dataLayer || [];
     function gtag() { window.dataLayer.push(arguments); }
     window.gtag = gtag;
@@ -18,6 +19,7 @@ const initGA = () => {
     gtag('config', GA_MEASUREMENT_ID);
   }
 };
+
 // Analytics event tracking functions
 const trackEvent = (eventName, eventParams = {}) => {
   if (typeof window !== 'undefined' && window.gtag) {
@@ -27,10 +29,12 @@ const trackEvent = (eventName, eventParams = {}) => {
 };
 
 const analytics = {
+  // Page views
   pageView: (page) => {
     trackEvent('page_view', { page_title: page });
   },
   
+  // Property views
   propertyViewed: (address) => {
     trackEvent('property_viewed', { 
       address: address,
@@ -38,6 +42,7 @@ const analytics = {
     });
   },
   
+  // Smart Tour events
   tourStarted: (address) => {
     trackEvent('smart_tour_started', {
       address: address,
@@ -69,13 +74,26 @@ const analytics = {
     });
   },
   
+  // Search events
   addressSearched: (address) => {
     trackEvent('address_searched', {
       address: address,
       event_category: 'search'
     });
+  },
+  
+  // Engagement events
+  mapViewed: (address) => {
+    trackEvent('map_viewed', {
+      address: address,
+      event_category: 'engagement'
+    });
   }
 };
+
+// IMPORTANT: Add your Google Maps API key here
+const GOOGLE_MAPS_API_KEY = 'AIzaSyBxU6OMCZvkLLbcjo4bXoyQOHg02VZ8gok'; // Replace with your actual API key
+
 // Logo Component
 const NeighborScopeLogo = ({ size = 'md', theme = 'dark', className = '' }) => {
   const sizes = {
@@ -508,9 +526,19 @@ export default function NeighborhoodScope() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchError, setSearchError] = useState(null);
 
+  // Initialize Google Analytics on mount
+  useEffect(() => {
+    initGA();
+    analytics.pageView('home');
+    console.log('📊 Analytics initialized');
+  }, []);
+
   const handlePropertySelect = async (property) => {
     setIsLoading(true);
     setSelectedProperty(property);
+    
+    // Track property view
+    analytics.propertyViewed(property.address);
     
     // Fetch nearby data for the property
     if (property.id !== 'custom') {
@@ -553,12 +581,15 @@ export default function NeighborhoodScope() {
     console.log('📍 Geocoding result:', result);
     
     if (result) {
+      // Track successful address search
+      analytics.addressSearched(result.formattedAddress);
+      
       // Create a property object from the geocoded address
       const customProperty = {
         id: 'custom',
         address: result.formattedAddress,
         coords: result.coords,
-        price: "Price not available", // User can explore neighborhood even without price
+        price: "Price not available",
         beds: null,
         baths: null,
         lifestyleMatch: null,
@@ -572,17 +603,10 @@ export default function NeighborhoodScope() {
       console.log('📍 Fetching nearby places...');
       const places = await fetchNearbyPlaces(result.coords.lat, result.coords.lng);
       console.log('✅ Nearby places:', places);
-      setNearbyData(places); // Will be null if fetching fails, which is fine
+      setNearbyData(places);
       
       setSelectedProperty(customProperty);
       setCurrentView('exploration');
-      
-      // Track the search (Google Analytics will be added)
-      if (window.gtag) {
-        window.gtag('event', 'property_search', {
-          address: result.formattedAddress
-        });
-      }
     } else {
       console.error('❌ Geocoding failed');
       setSearchError('Could not find that address. Please try a full address like: "123 Main St, Garden City, NY 11530"');
@@ -1308,9 +1332,6 @@ function FeatureCard({ icon, title, description }) {
 
 function ExplorationView({ property, nearbyData, onBack }) {
   const [showStreetView, setShowStreetView] = useState(true); // Default to Street View!
-  const [showContactForm, setShowContactForm] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
   const mapRef = useRef(null);
   const streetViewRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -1324,28 +1345,7 @@ function ExplorationView({ property, nearbyData, onBack }) {
   const streetViewInstanceRef = useRef(null);
   const tourIntervalRef = useRef(null);
   const tourStepRef = useRef(0);
-
-  const handleContactSubmit = () => {
-    // Log to console so you can see it working
-    console.log('=== LEAD CAPTURED ===');
-    console.log('Name:', formData.name);
-    console.log('Email:', formData.email);
-    console.log('Phone:', formData.phone);
-    console.log('Message:', formData.message);
-    console.log('Property:', property.address);
-    console.log('======================');
-    console.log('In production, this would email you the lead details.');
-    
-    // Close form and show success
-    setShowContactForm(false);
-    setShowSuccess(true);
-    
-    // Reset form
-    setFormData({ name: '', email: '', phone: '', message: '' });
-    
-    // Hide success after 5 seconds
-    setTimeout(() => setShowSuccess(false), 5000);
-  };
+  const tourStartTimeRef = useRef(null); // Track tour duration for analytics
 
   // Smart Tour: Calculate waypoints from property to POIs and back
   // Smart Tour: Create circular route around the IMMEDIATE block
@@ -1419,6 +1419,9 @@ function ExplorationView({ property, nearbyData, onBack }) {
     console.log('🚀 Starting Smart Tour...');
     console.log('Property:', property.address);
     
+    // Track Smart Tour start
+    analytics.tourStarted(property.address);
+    
     const waypoints = calculateTourWaypoints();
     
     if (waypoints.length < 3) {
@@ -1431,6 +1434,9 @@ function ExplorationView({ property, nearbyData, onBack }) {
     setTourPaused(false);
     setTourProgress(0);
     tourStepRef.current = 0;
+    
+    // Store tour start time for duration tracking
+    tourStartTimeRef.current = Date.now();
 
     runTourStep(waypoints);
   };
@@ -1442,8 +1448,10 @@ function ExplorationView({ property, nearbyData, onBack }) {
     const step = tourStepRef.current;
     
     if (step >= waypoints.length) {
-      // Tour complete
+      // Tour complete - track completion with duration
       console.log('✅ Tour complete!');
+      const duration = tourStartTimeRef.current ? Math.round((Date.now() - tourStartTimeRef.current) / 1000) : 0;
+      analytics.tourCompleted(property.address, duration);
       stopTour();
       return;
     }
@@ -1485,6 +1493,7 @@ function ExplorationView({ property, nearbyData, onBack }) {
   // Pause tour
   const pauseTour = () => {
     setTourPaused(true);
+    analytics.tourPaused(property.address, tourProgress);
     if (tourIntervalRef.current) {
       clearTimeout(tourIntervalRef.current);
     }
@@ -1501,11 +1510,17 @@ function ExplorationView({ property, nearbyData, onBack }) {
 
   // Stop tour
   const stopTour = () => {
+    // Track if tour was stopped before completion
+    if (isTourActive && tourProgress < 100) {
+      analytics.tourStopped(property.address, tourProgress);
+    }
+    
     setIsTourActive(false);
     setTourPaused(false);
     setTourProgress(0);
     setCurrentPOI(null);
     tourStepRef.current = 0;
+    tourStartTimeRef.current = null;
     
     if (tourIntervalRef.current) {
       clearTimeout(tourIntervalRef.current);
@@ -1644,17 +1659,8 @@ function ExplorationView({ property, nearbyData, onBack }) {
                 <p className="text-slate-600 text-sm">{property.price} • {property.beds} beds • {property.baths} baths</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowContactForm(true)}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all flex items-center gap-2"
-              >
-                <Calendar size={16} />
-                Schedule Viewing
-              </button>
-              <div className="ml-2">
-                <NeighborScopeLogo size="sm" theme="light" />
-              </div>
+            <div className="ml-2">
+              <NeighborScopeLogo size="sm" theme="light" />
             </div>
           </div>
         </div>
@@ -1998,93 +2004,6 @@ function ExplorationView({ property, nearbyData, onBack }) {
           </div>
         </div>
       </div>
-
-      {/* Contact Form Modal */}
-      {showContactForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-6">
-          <div className="bg-white rounded-2xl max-w-md w-full p-8 relative">
-            <button
-              onClick={() => setShowContactForm(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
-            >
-              <X size={24} />
-            </button>
-            
-            <h3 className="playfair text-2xl font-bold text-slate-900 mb-2">Schedule a Viewing</h3>
-            <p className="text-slate-600 mb-6">{property.address}</p>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                  placeholder="John Smith"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                  placeholder="john@example.com"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Phone *</label>
-                <input
-                  type="tel"
-                  required
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Message (Optional)</label>
-                <textarea
-                  value={formData.message}
-                  onChange={(e) => setFormData({...formData, message: e.target.value})}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                  rows="3"
-                  placeholder="Preferred viewing times, questions..."
-                />
-              </div>
-              
-              <button
-                onClick={handleContactSubmit}
-                disabled={!formData.name || !formData.email || !formData.phone}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Send to Agent →
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Success Message */}
-      {showSuccess && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[101] w-full max-w-md px-4">
-          <div className="bg-green-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
-            <Check size={28} className="flex-shrink-0" />
-            <div>
-              <div className="font-bold text-lg">Request Received!</div>
-              <div className="text-sm text-green-100">A local agent will contact you within 1 hour</div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -3,6 +3,21 @@ import { MapPin, Train, School, Coffee, AlertTriangle, Clock, Navigation, Zap, S
 
 // IMPORTANT: Add your Google Maps API key here
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBxU6OMCZvkLLbcjo4bXoyQOHg02VZ8gok'; // Replace with your actual API key
+// Google Analytics
+const GA_MEASUREMENT_ID = 'G-KMQ4KM49XM';
+const initGA = () => {
+  if (typeof window !== 'undefined' && !window.gtag) {
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+    document.head.appendChild(script1);
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { window.dataLayer.push(arguments); }
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', GA_MEASUREMENT_ID);
+  }
+};
 
 // Logo Component
 const NeighborScopeLogo = ({ size = 'md', theme = 'dark', className = '' }) => {

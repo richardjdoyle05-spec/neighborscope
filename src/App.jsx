@@ -1,4 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+/* Google Analytics G-KMQ4KM49XM */
+if (typeof window !== 'undefined' && !window.gaInit) {
+  window.gaInit = true;
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://www.googletagmanager.com/gtag/js?id=G-KMQ4KM49XM';
+  document.head.appendChild(script);
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  window.gtag = gtag;
+  gtag('js', new Date());
+  gtag('config', 'G-KMQ4KM49XM'); 
+  
+}import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Train, School, Coffee, AlertTriangle, Clock, Navigation, Zap, ShoppingBag, TreePine, Info, Heart, X, Check, TrendingUp, Building, Users, Moon, Sun, ExternalLink, Calendar, Search, ArrowRight, Eye } from 'lucide-react';
 
 // IMPORTANT: Add your Google Maps API key here

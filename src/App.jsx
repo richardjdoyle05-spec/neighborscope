@@ -18,7 +18,64 @@ const initGA = () => {
     gtag('config', GA_MEASUREMENT_ID);
   }
 };
+// Analytics event tracking functions
+const trackEvent = (eventName, eventParams = {}) => {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', eventName, eventParams);
+    console.log('📊 Analytics:', eventName, eventParams);
+  }
+};
 
+const analytics = {
+  pageView: (page) => {
+    trackEvent('page_view', { page_title: page });
+  },
+  
+  propertyViewed: (address) => {
+    trackEvent('property_viewed', { 
+      address: address,
+      event_category: 'engagement'
+    });
+  },
+  
+  tourStarted: (address) => {
+    trackEvent('smart_tour_started', {
+      address: address,
+      event_category: 'smart_tour'
+    });
+  },
+  
+  tourCompleted: (address, duration) => {
+    trackEvent('smart_tour_completed', {
+      address: address,
+      duration_seconds: duration,
+      event_category: 'smart_tour'
+    });
+  },
+  
+  tourPaused: (address, progress) => {
+    trackEvent('smart_tour_paused', {
+      address: address,
+      progress_percent: progress,
+      event_category: 'smart_tour'
+    });
+  },
+  
+  tourStopped: (address, progress) => {
+    trackEvent('smart_tour_stopped', {
+      address: address,
+      progress_percent: progress,
+      event_category: 'smart_tour'
+    });
+  },
+  
+  addressSearched: (address) => {
+    trackEvent('address_searched', {
+      address: address,
+      event_category: 'search'
+    });
+  }
+};
 // Logo Component
 const NeighborScopeLogo = ({ size = 'md', theme = 'dark', className = '' }) => {
   const sizes = {

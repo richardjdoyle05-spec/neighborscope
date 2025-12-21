@@ -1731,7 +1731,7 @@ function ExplorationView({ property, nearbyData, onBack }) {
                   <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white px-6 py-3 rounded-lg shadow-2xl z-[110] animate-fadeIn">
                     <div className="flex items-center gap-2">
                       <span className="text-lg">💡</span>
-                      <span className="font-medium">Tip: Use ← → arrow keys to control speed</span>
+                      <span className="font-medium">Tip: Use ← → arrow keys to navigate</span>
                     </div>
                   </div>
                 )}

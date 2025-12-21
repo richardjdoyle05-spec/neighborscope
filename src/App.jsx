@@ -1335,6 +1335,7 @@ function ExplorationView({ property, nearbyData, onBack }) {
   const [tourSpeed, setTourSpeed] = useState('normal'); // slow, normal, fast
   const [tourProgress, setTourProgress] = useState(0);
   const [currentPOI, setCurrentPOI] = useState(null);
+  const [showNavigationTooltip, setShowNavigationTooltip] = useState(false);
   const streetViewInstanceRef = useRef(null);
   const tourIntervalRef = useRef(null);
   const tourStepRef = useRef(0);
@@ -1427,6 +1428,12 @@ function ExplorationView({ property, nearbyData, onBack }) {
     setTourPaused(false);
     setTourProgress(0);
     tourStepRef.current = 0;
+    
+    // Show navigation tooltip for 3 seconds
+    setShowNavigationTooltip(true);
+    setTimeout(() => {
+      setShowNavigationTooltip(false);
+    }, 3000);
     
     // Store tour start time for duration tracking
     tourStartTimeRef.current = Date.now();
@@ -1685,6 +1692,9 @@ function ExplorationView({ property, nearbyData, onBack }) {
                   <Eye size={24} />
                   START SMART TOUR
                 </button>
+                <p className="text-center text-sm text-slate-600 mt-3">
+                  💡 Use arrow keys to navigate
+                </p>
               ) : (
                 <div className="text-center">
                   <div className="text-lg font-semibold text-purple-600 mb-2">Tour in Progress...</div>
@@ -1710,6 +1720,16 @@ function ExplorationView({ property, nearbyData, onBack }) {
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
                       <p className="text-slate-600">Loading Street View...</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Navigation Tooltip - Shows for 3 seconds when tour starts */}
+                {showNavigationTooltip && (
+                  <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white px-6 py-3 rounded-lg shadow-2xl z-[110] animate-fadeIn">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">💡</span>
+                      <span className="font-medium">Tip: Use ← → arrow keys to control speed</span>
                     </div>
                   </div>
                 )}

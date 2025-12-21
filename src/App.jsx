@@ -390,20 +390,20 @@ const SAMPLE_PROPERTIES = [
     id: 1,
     address: "722 Steiner Street, San Francisco, CA 94117",
     coords: { lat: 37.7765, lng: -122.4350 },
-    price: "$4,200,000",
-    beds: 4,
-    baths: 3,
+    price: "$475,000",
+    beds: 2,
+    baths: 1,
     lifestyleMatch: 92,
     commuteTime: 47,
-    dealBreakers: 1
+    dealBreakers: 0
   },
   {
     id: 2,
     address: "131 Pierrepont Street, Brooklyn, NY 11201",
     coords: { lat: 40.6949, lng: -73.9957 },
-    price: "$3,800,000",
-    beds: 4,
-    baths: 3.5,
+    price: "$385,000",
+    beds: 1,
+    baths: 1,
     lifestyleMatch: 85,
     commuteTime: 51,
     dealBreakers: 0
@@ -412,34 +412,27 @@ const SAMPLE_PROPERTIES = [
     id: 3,
     address: "1800 N Burling Street, Chicago, IL 60614",
     coords: { lat: 41.9149, lng: -87.6538 },
-    price: "$2,200,000",
-    beds: 4,
-    baths: 3,
+    price: "$425,000",
+    beds: 2,
+    baths: 1.5,
     lifestyleMatch: 88,
     commuteTime: 44,
-    dealBreakers: 2
+    dealBreakers: 0
   }
 ];
 
 const NEARBY_LOCATIONS = {
   schools: [
-    { name: "Garden City High School", distance: 0.3, walkTime: 6, rating: 9, type: "Public High School" },
-    { name: "Locust Elementary", distance: 0.5, walkTime: 10, rating: 8, type: "Public Elementary" },
-    { name: "St. Anne's School", distance: 0.7, walkTime: 14, rating: 9, type: "Private K-8" }
+    // Schools will be loaded dynamically based on actual property location
   ],
   transit: [
-    { name: "Garden City LIRR Station", distance: 0.6, walkTime: 12, line: "Hempstead Branch", toPennStation: 35 },
-    { name: "Mineola LIRR Station", distance: 1.2, walkTime: 24, line: "Main Line", toPennStation: 32 }
+    // Transit will be loaded dynamically based on actual property location
   ],
   cafes: [
-    { name: "Starbucks (7th St)", distance: 0.4, walkTime: 8 },
-    { name: "Local Coffee Shop", distance: 0.3, walkTime: 6 },
-    { name: "The Bryant Library Cafe", distance: 0.5, walkTime: 10 }
+    // Cafes will be loaded dynamically based on actual property location
   ],
   amenities: [
-    { name: "Roosevelt Field Mall", distance: 1.5, type: "Shopping", icon: "shopping" },
-    { name: "Eisenhower Park", distance: 2.1, type: "Park", icon: "park" },
-    { name: "Whole Foods", distance: 0.8, type: "Grocery", icon: "shopping" }
+    // Amenities will be loaded dynamically based on actual property location
   ]
 };
 
@@ -698,18 +691,18 @@ function SearchLandingPage({ onSubmit, onPropertySelect, isLoading, error }) {
           {/* Hero Section */}
           <div className="text-center mb-12">
             <h1 className="playfair text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              Stop the
+              See the Neighborhood
               <span className="block mt-2">
                 <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  Reconnaissance Missions
+                  Before You Waste a Saturday
                 </span>
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-300 mb-3 leading-relaxed">
-              Explore any home's neighborhood via Street View before you drive there.
+              Auto-walk around any block in 30 seconds via Street View.
             </p>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-              Smart Tour auto-walks you around the neighborhood showing schools, transit, cafes, and parks.
+              See the actual street, neighbors, and vibe before you drive there.
             </p>
           </div>
 
@@ -729,7 +722,7 @@ function SearchLandingPage({ onSubmit, onPropertySelect, isLoading, error }) {
                           handleSubmit();
                         }
                       }}
-                      placeholder="Paste any Zillow/Redfin link or enter an address..."
+                      placeholder="Enter any address..."
                       className="w-full px-6 py-5 bg-slate-800/50 border-2 border-slate-600 rounded-xl text-white placeholder-slate-400 text-lg focus:border-purple-500 focus:outline-none transition-all"
                       disabled={isLoading}
                     />
@@ -1150,15 +1143,15 @@ function LandingPage({ onPropertySelect, onShowMatcher, onBack, userPreferences,
         <div className="max-w-4xl mx-auto text-center">
           <div className="opacity-0 animate-fadeInUp">
             <h1 className="playfair text-6xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              Stop the
-              <span className="gradient-text"> Reconnaissance Missions</span>
+              Stop Driving to
+              <span className="gradient-text"> Disappointment</span>
             </h1>
           </div>
           
           <div className="opacity-0 animate-fadeInUp delay-100">
             <p className="text-xl text-slate-300 mb-12 leading-relaxed">
-              Know exactly what's around your future home before you drive there.
-              <br />Power lines, train stations, schools, cafes — all in one intelligent view.
+              Auto-walk around any block in 30 seconds via Street View.
+              <br />See the actual street before you drive there.
             </p>
           </div>
 
@@ -1832,9 +1825,6 @@ function ExplorationView({ property, nearbyData, onBack }) {
                   <div>
                     <div className="flex justify-between items-start mb-1">
                       <div className="font-medium text-slate-900">{school.name}</div>
-                      <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">
-                        {school.rating}/10
-                      </div>
                     </div>
                     <div className="text-sm text-slate-600">{school.type}</div>
                     <div className="text-xs text-slate-500 mt-1">
@@ -1864,9 +1854,6 @@ function ExplorationView({ property, nearbyData, onBack }) {
                   <div>
                     <div className="flex justify-between items-start mb-1">
                       <div className="font-medium text-slate-900">{school.name}</div>
-                      <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">
-                        {school.rating}/10
-                      </div>
                     </div>
                     <div className="text-sm text-slate-600">{school.type}</div>
                     <div className="text-xs text-slate-500 mt-1">

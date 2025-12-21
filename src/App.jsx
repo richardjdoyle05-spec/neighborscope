@@ -1679,22 +1679,24 @@ function ExplorationView({ property, nearbyData, onBack }) {
               </div>
               
               {!isTourActive ? (
-                <button 
-                  onClick={() => {
-                    if (!mapLoaded || !streetViewInstanceRef.current) {
-                      alert('Loading Street View... Click "START SMART TOUR" again in a moment!');
-                    } else {
-                      startTour();
-                    }
-                  }}
-                  className="w-full py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold text-lg flex items-center justify-center gap-3"
-                >
-                  <Eye size={24} />
-                  START SMART TOUR
-                </button>
-                <p className="text-center text-sm text-slate-600 mt-3">
-                  💡 Use arrow keys to navigate
-                </p>
+                <>
+                  <button 
+                    onClick={() => {
+                      if (!mapLoaded || !streetViewInstanceRef.current) {
+                        alert('Loading Street View... Click "START SMART TOUR" again in a moment!');
+                      } else {
+                        startTour();
+                      }
+                    }}
+                    className="w-full py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold text-lg flex items-center justify-center gap-3"
+                  >
+                    <Eye size={24} />
+                    START SMART TOUR
+                  </button>
+                  <p className="text-center text-sm text-slate-600 mt-3">
+                    💡 Use arrow keys to navigate
+                  </p>
+                </>
               ) : (
                 <div className="text-center">
                   <div className="text-lg font-semibold text-purple-600 mb-2">Tour in Progress...</div>
